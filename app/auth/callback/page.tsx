@@ -1,40 +1,69 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function AuthCallbackPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
+  const [message, setMessage] = useState('กำลังตรวจสอบการเข้าสู่ระบบ...')
 
   useEffect(() => {
-    const code = searchParams.get('code')
-
-    if (!code) {
-      router.replace('/login?error=callback')
-      return
-    }
-
     const handleCallback = async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      const code = searchParams.get('code')
+      const error = searchParams.get('error')
+      const errorDescription = searchParams.get('error_description')
+
+      console.log('OAuth code:', code)
+      console.log('OAuth error:', error)
+      console.log('OAuth error description:', errorDescription)
 
       if (error) {
-        console.error(error)
-        router.replace('/login?error=callback')
+        setMessage(`LINE Login Error: ${errorDescription || error}`)
         return
       }
 
-      router.replace('/')
+      if (!code) {
+        setMessage('ไม่พบ OAuth code')
+        return
+      }
+
+      const { data, error: exchangeError } =
+        await supabase.auth.exchangeCodeForSession(code)
+
+      console.log('Exchange result:', data)
+      console.log('Exchange error:', exchangeError)
+
+      if (exchangeError) {
+        setMessage(`แลก Session ไม่สำเร็จ: ${exchangeError.message}`)
+        return
+      }
+
+      setMessage('เข้าสู่ระบบสำเร็จ กำลังไปหน้าแรก...')
+
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 1000)
     }
 
     handleCallback()
-  }, [router, searchParams])
+  }, [searchParams])
 
   return (
-    <main style={{ padding: 40, textAlign: 'center' }}>
-      <h2>กำลังเข้าสู่ระบบ...</h2>
-      <p>กรุณารอสักครู่</p>
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        padding: '20px',
+      }}
+    >
+      <div>
+        <h2>🐱 Mawe Baan</h2>
+        <p>{message}</p>
+      </div>
     </main>
   )
 }
