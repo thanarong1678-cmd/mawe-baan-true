@@ -10,8 +10,20 @@ const [loading, setLoading] = useState(true)
 const [error, setError] = useState('')
 
 useEffect(() => {
-    const login = async () => {
+    const checkLogin = async () => {
     try {
+        // ตรวจว่ามี Supabase session อยู่แล้วหรือไม่
+        const {
+        data: { session },
+        } = await supabase.auth.getSession()
+
+        // ถ้า Login สำเร็จแล้ว ให้กลับหน้าแรก
+        if (session) {
+        router.replace('/')
+        return
+        }
+
+        // ถ้ายังไม่ได้ Login ให้เริ่ม LINE Login
         const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'custom:line',
         options: {
@@ -33,7 +45,7 @@ useEffect(() => {
     }
     }
 
-    login()
+    checkLogin()
 }, [router])
 
 return (
@@ -60,9 +72,15 @@ return (
     >
         <h1>🐱 Mawe Baan</h1>
 
-        <p>
-        {error || 'กำลังเชื่อมต่อกับ LINE...'}
+        {loading && !error && (
+        <p>กำลังเชื่อมต่อกับ LINE...</p>
+        )}
+
+        {error && (
+        <p style={{ color: 'red' }}>
+            {error}
         </p>
+        )}
     </div>
     </main>
 )
