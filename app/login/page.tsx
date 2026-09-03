@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import liff from '@line/liff'
+import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -10,35 +10,22 @@ const [loading, setLoading] = useState(true)
 const [error, setError] = useState('')
 
 useEffect(() => {
-    const initLIFF = async () => {
+    const login = async () => {
     try {
-        const liffId = process.env.NEXT_PUBLIC_LIFF_ID
-
-        if (!liffId) {
-        throw new Error('ไม่พบ LIFF ID ใน .env.local')
-        }
-
-        await liff.init({
-        liffId,
+        const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'custom:line',
+        options: {
+            redirectTo: `${window.location.origin}/login`,
+        },
         })
 
-        if (!liff.isLoggedIn()) {
-        liff.login()
-        return
+        if (error) {
+        throw error
         }
 
-        const profile = await liff.getProfile()
-
-        localStorage.setItem(
-        'line_user',
-        JSON.stringify({
-            userId: profile.userId,
-            displayName: profile.displayName,
-            pictureUrl: profile.pictureUrl,
-        })
-        )
-
-        router.push('/')
+        if (data.url) {
+        window.location.href = data.url
+        }
     } catch (err) {
         console.error(err)
         setError('ไม่สามารถเข้าสู่ระบบด้วย LINE ได้')
@@ -46,7 +33,7 @@ useEffect(() => {
     }
     }
 
-    initLIFF()
+    login()
 }, [router])
 
 return (
@@ -71,23 +58,11 @@ return (
         boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         }}
     >
-        <h1 style={{ marginBottom: '10px' }}>
-        🐱 Mawe Baan
-        </h1>
+        <h1>🐱 Mawe Baan</h1>
 
-        <p style={{ marginBottom: '25px' }}>
-        เข้าสู่ระบบด้วย LINE
+        <p>
+        {error || 'กำลังเชื่อมต่อกับ LINE...'}
         </p>
-
-        {loading && !error && (
-        <p>กำลังเชื่อมต่อกับ LINE...</p>
-        )}
-
-        {error && (
-        <p style={{ color: 'red' }}>
-            {error}
-        </p>
-        )}
     </div>
     </main>
 )
