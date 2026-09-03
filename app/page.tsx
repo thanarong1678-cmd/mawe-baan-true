@@ -330,15 +330,23 @@ export default function Home() {
     e.preventDefault();
     if (!catName.trim()) return alert('กรอกชื่อน้องแมวด้วยครับ');
 
-    const { error } = await supabase.from('cats').insert([{
-      name: catName.trim(),
-      age: age.trim() || 'ไม่ระบุอายุ',
-      color: color || 'สลิด',
-      weight: weight ? parseFloat(weight) : 0,
-      last_bath_date: lastBathDate || null,
-      needs_medication: needsMedication,
-      medication_note: needsMedication ? medicationNote : '',
-    }]);
+  const { data: { user } } = await supabase.auth.getUser();
+
+if (!user) {
+  alert('กรุณาเข้าสู่ระบบก่อนเพิ่มแมว');
+  return;
+}
+
+const { error } = await supabase.from('cats').insert([{
+  user_id: user.id,
+  name: catName.trim(),
+  age: age.trim() || 'ไม่ระบุอายุ',
+  color: color || 'สลิด',
+  weight: weight ? parseFloat(weight) : 0,
+  last_bath_date: lastBathDate || null,
+  needs_medication: needsMedication,
+  medication_note: needsMedication ? medicationNote : '',
+}]);
 
     if (error) {
       alert('เกิดข้อผิดพลาด: ' + error.message);
