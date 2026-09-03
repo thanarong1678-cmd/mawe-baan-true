@@ -2,86 +2,106 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-const router = useRouter()
-const [loading, setLoading] = useState(true)
-const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-useEffect(() => {
-    const checkLogin = async () => {
+  const handleLogin = async () => {
+    setLoading(true)
+    setError('')
+
     try {
-        // ตรวจว่ามี Supabase session อยู่แล้วหรือไม่
-        const {
-        data: { session },
-        } = await supabase.auth.getSession()
-
-        // ถ้า Login สำเร็จแล้ว ให้กลับหน้าแรก
-        if (session) {
-        router.replace('/')
-        return
-        }
-
-        // ถ้ายังไม่ได้ Login ให้เริ่ม LINE Login
-        const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'custom:line',
         options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
-        })
+      })
 
-        if (error) {
+      if (error) {
         throw error
-        }
+      }
 
-        if (data.url) {
+      if (data.url) {
         window.location.href = data.url
-        }
+      }
     } catch (err) {
-        console.error(err)
-        setError('ไม่สามารถเข้าสู่ระบบด้วย LINE ได้')
-        setLoading(false)
+      console.error(err)
+      setError('ไม่สามารถเข้าสู่ระบบด้วย LINE ได้')
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session) {
+        window.location.href = '/'
+      }
     }
 
-    checkLogin()
-}, [router])
+    checkSession()
+  }, [])
 
-return (
+  return (
     <main
-    style={{
+      style={{
         minHeight: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         background: '#f5f5f5',
         padding: '20px',
-    }}
+      }}
     >
-    <div
+      <div
         style={{
-        width: '100%',
-        maxWidth: '400px',
-        background: 'white',
-        padding: '30px',
-        borderRadius: '16px',
-        textAlign: 'center',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          width: '100%',
+          maxWidth: '400px',
+          background: 'white',
+          padding: '30px',
+          borderRadius: '16px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
         }}
-    >
+      >
         <h1>🐱 Mawe Baan</h1>
 
-        {loading && !error && (
-        <p>กำลังเชื่อมต่อกับ LINE...</p>
+        <p>
+          {loading
+            ? 'กำลังเชื่อมต่อกับ LINE...'
+            : 'เข้าสู่ระบบเพื่อใช้งาน Mawe Baan'}
+        </p>
+
+        {!loading && (
+          <button
+            onClick={handleLogin}
+            style={{
+              width: '100%',
+              padding: '14px',
+              marginTop: '20px',
+              border: 'none',
+              borderRadius: '10px',
+              background: '#06C755',
+              color: 'white',
+              fontSize: '16px',
+              cursor: 'pointer',
+            }}
+          >
+            เข้าสู่ระบบด้วย LINE
+          </button>
         )}
 
         {error && (
-        <p style={{ color: 'red' }}>
+          <p style={{ color: 'red', marginTop: '15px' }}>
             {error}
-        </p>
+          </p>
         )}
-    </div>
+      </div>
     </main>
-)
+  )
 }
