@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase'; // ใช้ Supabase Server Client
 
 interface Cat {
   id: string;
@@ -45,6 +45,7 @@ const CAT_THOUGHTS = [
   'ขอตากแดดแป๊บ ☀️',
 ];
 
+// 1. เพิ่ม import ด้านบนสุดของไฟล์ app/page.ts
 // 🎨 SVG Cat Drawing Component
 function CatVector({ colorName }: { colorName?: string }) {
   const colorObj = COLOR_OPTIONS.find(c => c.value === colorName) || COLOR_OPTIONS[0];
