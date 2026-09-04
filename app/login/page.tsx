@@ -13,7 +13,7 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'custom:line',
+        provider: 'custom:line-oauth',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
