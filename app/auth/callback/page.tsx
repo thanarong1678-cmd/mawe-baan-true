@@ -1,53 +1,49 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function AuthCallbackPage() {
-  const searchParams = useSearchParams()
-  const [message, setMessage] = useState('กำลังตรวจสอบการเข้าสู่ระบบ...')
+  const [message, setMessage] = useState('กำลังเข้าสู่ระบบ...')
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get('code')
-      const error = searchParams.get('error')
-      const errorDescription = searchParams.get('error_description')
+      const params = new URLSearchParams(window.location.search)
 
-      console.log('OAuth code:', code)
-      console.log('OAuth error:', error)
-      console.log('OAuth error description:', errorDescription)
+      const code = params.get('code')
+      const error = params.get('error')
+      const errorDescription = params.get('error_description')
 
       if (error) {
-        setMessage(`LINE Login Error: ${errorDescription || error}`)
+        setMessage(
+          `เข้าสู่ระบบไม่สำเร็จ: ${errorDescription || error}`
+        )
         return
       }
 
       if (!code) {
-        setMessage('ไม่พบ OAuth code')
+        setMessage('ไม่พบรหัสเข้าสู่ระบบ')
         return
       }
 
-      const { data, error: exchangeError } =
+      const { error: exchangeError } =
         await supabase.auth.exchangeCodeForSession(code)
 
-      console.log('Exchange result:', data)
-      console.log('Exchange error:', exchangeError)
-
       if (exchangeError) {
-        setMessage(`แลก Session ไม่สำเร็จ: ${exchangeError.message}`)
+        console.error(exchangeError)
+        setMessage(
+          `เข้าสู่ระบบไม่สำเร็จ: ${exchangeError.message}`
+        )
         return
       }
 
-      setMessage('เข้าสู่ระบบสำเร็จ กำลังไปหน้าแรก...')
+      setMessage('เข้าสู่ระบบสำเร็จ กำลังเข้าสู่หน้าหลัก...')
 
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 1000)
+      window.location.href = '/'
     }
 
     handleCallback()
-  }, [searchParams])
+  }, [])
 
   return (
     <main
