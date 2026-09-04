@@ -17,11 +17,11 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     let active = true
 
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession()
+      const { data: { user } } = await supabase.auth.getUser()
 
       if (!active) return
 
-      if (!data.session) {
+      if (!user) {
         window.location.replace('/login')
         return
       }
