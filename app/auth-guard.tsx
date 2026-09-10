@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [checking, setChecking] = useState(pathname === '/')
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       if (!active) return
 
       if (!user) {
-        window.location.replace('/login')
+        router.replace('/login')
         return
       }
 
@@ -31,10 +32,25 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
     checkAuth()
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return
+
+      if (event === 'SIGNED_IN' && session) {
+        setChecking(false)
+        return
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setChecking(true)
+        router.replace('/login')
+      }
+    })
+
     return () => {
       active = false
+      subscription.unsubscribe()
     }
-  }, [pathname])
+  }, [pathname, router])
 
   if (checking) {
     return (
