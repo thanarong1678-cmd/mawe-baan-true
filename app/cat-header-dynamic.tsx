@@ -50,7 +50,7 @@ export default function CatHeaderDynamic() {
     )
 
     const quoteNode = textNodes.find((node) => {
-      return nameElement.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
+      return Boolean(nameElement.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)
     })
 
     if (quoteNode) {
@@ -64,7 +64,8 @@ export default function CatHeaderDynamic() {
     if (pathname !== '/') return
 
     let active = true
-    let timer: ReturnType<typeof setInterval> | null = null
+    let quoteTimer: ReturnType<typeof setInterval> | null = null
+    let waitTimer: ReturnType<typeof setInterval> | null = null
 
     const tick = async () => {
       if (!active) return
@@ -72,24 +73,27 @@ export default function CatHeaderDynamic() {
     }
 
     const start = () => {
+      if (quoteTimer || !document.querySelector('header')) return
       tick()
-      timer = setInterval(tick, 3000)
+      quoteTimer = setInterval(tick, 3000)
     }
 
-    const observer = new MutationObserver(() => {
-      if (!document.querySelector('header b')) return
-      if (timer === null) start()
-      else tick()
-    })
-
-    observer.observe(document.body, { childList: true, subtree: true })
-
-    start()
+    if (document.querySelector('header')) {
+      start()
+    } else {
+      waitTimer = setInterval(() => {
+        if (document.querySelector('header')) {
+          if (waitTimer) clearInterval(waitTimer)
+          waitTimer = null
+          start()
+        }
+      }, 100)
+    }
 
     return () => {
       active = false
-      observer.disconnect()
-      if (timer) clearInterval(timer)
+      if (waitTimer) clearInterval(waitTimer)
+      if (quoteTimer) clearInterval(quoteTimer)
     }
   }, [pathname, updateHeader])
 
