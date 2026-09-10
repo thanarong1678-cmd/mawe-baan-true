@@ -4,6 +4,7 @@ import "./globals.css";
 import "./cat-history-collapse.css";
 import AuthGuard from "./auth-guard";
 import CatHistoryCollapse from "./cat-history-collapse";
+import CatHeaderDynamic from "./cat-header-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <AuthGuard>
           <CatHistoryCollapse />
+          <CatHeaderDynamic />
           {children}
         </AuthGuard>
       </body>
