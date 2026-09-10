@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,7 +26,7 @@ export default function LoginPage() {
       }
 
       if (data.url) {
-        window.location.href = data.url
+        window.location.assign(data.url)
       }
     } catch (err) {
       console.error(err)
@@ -34,18 +36,29 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+    let active = true
 
-      if (session) {
-        window.location.href = '/'
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (active && user) {
+        router.replace('/')
       }
     }
 
     checkSession()
-  }, [])
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (active && (event === 'SIGNED_IN' || session)) {
+        router.replace('/')
+      }
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [router])
 
   return (
     <main
