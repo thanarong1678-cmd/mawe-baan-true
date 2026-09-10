@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fffaf2;
+  --foreground: #3f2a1d;
+  --mawe-cream: #fffaf2;
+  --mawe-orange: #f59e0b;
+  --mawe-line: #f2d7b5;
 }
 
 @theme inline {
@@ -12,15 +15,145 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  background: var(--background);
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 5%, rgba(251,191,36,.16), transparent 25rem),
+    radial-gradient(circle at 92% 22%, rgba(251,146,60,.11), transparent 28rem),
+    var(--mawe-cream);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+::selection { background: #fed7aa; color: #4a2c18; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button { transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background-color .18s ease; }
+
+/* Mawe Baan: warm, playful, mobile-first visual layer */
+main {
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+}
+main::before, main::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(8px);
+  opacity: .45;
+  animation: maweFloat 8s ease-in-out infinite;
+}
+main::before { left: -80px; top: 18%; background: rgba(253,186,116,.25); }
+main::after { right: -80px; top: 58%; background: rgba(253,164,175,.20); animation-delay: -3s; }
+
+.max-w-2xl {
+  width: min(100%, 1120px);
+  max-width: 1120px !important;
+  position: relative;
+}
+
+section {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(232,191,143,.55) !important;
+  box-shadow: 0 14px 35px rgba(117,67,31,.07), 0 2px 8px rgba(117,67,31,.05) !important;
+  backdrop-filter: blur(10px);
+  animation: maweReveal .55s ease both;
+}
+section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.28) 50%, transparent 80%);
+  transform: translateX(-120%);
+  transition: transform .8s ease;
+}
+section:hover::after { transform: translateX(120%); }
+section:nth-of-type(2) { animation-delay: .05s; }
+section:nth-of-type(3) { animation-delay: .10s; }
+section:nth-of-type(4) { animation-delay: .15s; }
+section:nth-of-type(5) { animation-delay: .20s; }
+
+header {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 58%, #fb7185 125%) !important;
+  box-shadow: 0 18px 45px rgba(234,88,12,.18) !important;
+  border: 1px solid rgba(255,255,255,.35);
+  animation: maweHero .65s cubic-bezier(.2,.8,.2,1) both;
+}
+header::before {
+  content: "";
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  right: -45px;
+  top: -75px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.14);
+  animation: maweFloat 6s ease-in-out infinite;
+}
+header button:hover { transform: translateY(-2px) scale(1.03); }
+
+.wallpaper-day, .wallpaper-night {
+  position: relative;
+  box-shadow: inset 0 0 35px rgba(120,72,35,.08);
+}
+.animate-cat-walk {
+  will-change: transform;
+  filter: drop-shadow(0 5px 3px rgba(0,0,0,.12));
+}
+.animate-cat-walk:hover { filter: drop-shadow(0 8px 5px rgba(0,0,0,.16)); }
+.animate-cloud { will-change: transform; }
+
+section .rounded-2xl, section .rounded-xl {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+section .rounded-2xl:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(120,72,35,.08);
+}
+input, select {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease;
+}
+input:focus, select:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(245,158,11,.12) !important;
+}
+button:active { transform: scale(.96); }
+button.bg-amber-500, button.bg-orange-500 { box-shadow: 0 7px 18px rgba(245,158,11,.20); }
+button.bg-amber-500:hover, button.bg-orange-500:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 25px rgba(245,158,11,.28);
+}
+
+.fixed.inset-0 { animation: maweFade .2s ease both; }
+.fixed.inset-0 > div { animation: maweModal .3s cubic-bezier(.2,.8,.2,1) both; }
+
+::-webkit-scrollbar { width: 9px; }
+::-webkit-scrollbar-track { background: #fff7ed; }
+::-webkit-scrollbar-thumb { background: #f6c27a; border-radius: 999px; border: 2px solid #fff7ed; }
+
+@keyframes maweReveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes maweHero { from { opacity: 0; transform: translateY(-12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes maweModal { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes maweFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes maweFloat { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(0,-10px,0); } }
+
+@media (max-width: 640px) {
+  main { padding: 12px !important; }
+  .max-w-2xl { width: 100%; }
+  section, header { border-radius: 24px !important; }
+  .wallpaper-day, .wallpaper-night { min-height: 220px; }
+  .animate-cat-walk { animation-duration: 9s !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
