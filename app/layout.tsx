@@ -6,7 +6,7 @@ import "./home-decoration.css";
 import AuthGuard from "./auth-guard";
 import CatHistoryCollapse from "./cat-history-collapse";
 import CatHeaderDynamic from "./cat-header-dynamic";
-import DesktopHeaderFix from "./desktop-header-fix";
+import StockLayoutFix from "./stock-layout-fix";
 import HomeDecoration from "./home-decoration";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -21,7 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthGuard>
           <CatHistoryCollapse />
           <CatHeaderDynamic />
-          <DesktopHeaderFix />
+          <StockLayoutFix />
           <HomeDecoration />
           {children}
         </AuthGuard>
