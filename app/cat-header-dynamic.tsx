@@ -15,15 +15,21 @@ const HEADER_QUOTES = [
 
 function catColorFilter(color: string) {
   const c = color.toLowerCase().trim()
-  if (c.includes('ดำ') || c.includes('black')) return 'grayscale(1) brightness(.38)'
-  if (c.includes('ขาว') || c.includes('white')) return 'grayscale(1) brightness(1.55)'
-  if (c.includes('เทา') || c.includes('gray') || c.includes('grey')) return 'grayscale(1) brightness(.82)'
-  if (c.includes('ส้ม') || c.includes('orange')) return 'sepia(.35) saturate(2) hue-rotate(-8deg)'
-  if (c.includes('แดง') || c.includes('red')) return 'sepia(.3) saturate(2.3) hue-rotate(-25deg)'
-  if (c.includes('น้ำตาล') || c.includes('brown')) return 'sepia(.75) saturate(1.8) hue-rotate(-8deg) brightness(.8)'
-  if (c.includes('ครีม') || c.includes('cream')) return 'sepia(.35) saturate(1.2) brightness(1.12)'
+  if (c.includes('ดำ') || c.includes('black')) return 'none'
+  if (c.includes('ขาว') || c.includes('white')) return 'grayscale(1) brightness(1.45)'
+  if (c.includes('เทา') || c.includes('gray') || c.includes('grey')) return 'grayscale(1) brightness(.78)'
+  if (c.includes('ส้ม') || c.includes('orange')) return 'sepia(.25) saturate(2.2) hue-rotate(-8deg)'
+  if (c.includes('แดง') || c.includes('red')) return 'sepia(.25) saturate(2.5) hue-rotate(-25deg)'
+  if (c.includes('น้ำตาล') || c.includes('brown')) return 'sepia(.7) saturate(1.8) brightness(.82)'
+  if (c.includes('ครีม') || c.includes('cream')) return 'sepia(.3) saturate(1.15) brightness(1.12)'
   if (c.includes('สลิด') || c.includes('tabby')) return 'sepia(.45) saturate(1.25) hue-rotate(355deg) brightness(.95)'
   return 'none'
+}
+
+function catColorEmoji(color: string) {
+  const c = color.toLowerCase().trim()
+  if (c.includes('ดำ') || c.includes('black')) return '🐈‍⬛'
+  return '🐱'
 }
 
 function ensureStockStyles() {
@@ -41,7 +47,7 @@ function ensureStockStyles() {
     .mawe-header-quote{display:flex!important;align-items:center;justify-content:space-between!important;gap:8px;width:min(390px,100%)!important;max-width:390px!important;padding:11px 17px!important;border-radius:999px!important;background:rgba(255,239,211,.38)!important;border:2px solid rgba(255,255,255,.74)!important;color:#7b451d!important;font-size:14px!important;font-weight:800!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(124,45,18,.06)!important;overflow:hidden!important}
     .mawe-header-quote .mawe-arrow{font-size:29px;color:#fff;text-shadow:0 2px 3px rgba(124,45,18,.12);line-height:1;flex:0 0 auto}.mawe-header-quote-text{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow-x:auto;overflow-y:hidden;text-overflow:clip;scrollbar-width:none;touch-action:pan-x}.mawe-header-quote-text::-webkit-scrollbar{display:none}
     header>div:first-child>div:first-child{width:112px!important;height:112px!important;min-width:112px!important;min-height:112px!important;flex:0 0 112px!important;font-size:54px!important;border-width:5px!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;aspect-ratio:1/1!important}
-    header>div:first-child>div:first-child > svg,header>div:first-child>div:first-child > img{width:46px!important;height:46px!important;max-width:46px!important;max-height:46px!important;flex:none!important;aspect-ratio:1/1!important;object-fit:contain!important;transform:none!important}
+    .mawe-cat-face{display:block!important;width:54px!important;height:54px!important;line-height:1!important;font-size:54px!important;flex:0 0 54px!important;text-align:center!important;transform:none!important;filter:none;}
     header>div:first-child>div:nth-child(2){flex:1 1 auto!important;min-width:0!important;max-width:calc(100% - 124px)!important}
     header h1{font-size:43px!important;line-height:1!important;color:#fff!important;text-shadow:0 3px 8px rgba(124,45,18,.2)}
     header h1+button{font-size:16px!important;padding:9px 18px!important;border-radius:999px!important;background:rgba(126,78,22,.68)!important}
@@ -49,7 +55,7 @@ function ensureStockStyles() {
       header{display:flex!important;flex-direction:column!important;gap:10px!important;padding:14px!important}
       header>div:first-child{width:100%!important;display:flex!important;align-items:center!important;gap:10px!important}
       header>div:first-child>div:first-child{width:68px!important;height:68px!important;min-width:68px!important;min-height:68px!important;flex:0 0 68px!important;font-size:34px!important;border-width:4px!important;aspect-ratio:1/1!important}
-      header>div:first-child>div:first-child > svg,header>div:first-child>div:first-child > img{width:46px!important;height:46px!important;max-width:46px!important;max-height:46px!important}
+      .mawe-cat-face{width:36px!important;height:36px!important;font-size:36px!important;flex-basis:36px!important}
       header>div:first-child>div:nth-child(2){max-width:calc(100% - 78px)!important}
       header h1{font-size:26px!important}
       header h1+button{font-size:11px!important;padding:6px 10px!important}
@@ -65,7 +71,7 @@ function ensureStockStyles() {
       header{display:flex!important;flex-direction:column!important;gap:12px!important}
       header>div:first-child{width:100%!important}
       header>div:first-child>div:first-child{width:92px!important;height:92px!important;min-width:92px!important;min-height:92px!important;flex:0 0 92px!important;font-size:46px!important;aspect-ratio:1/1!important}
-      header>div:first-child>div:first-child > svg,header>div:first-child>div:first-child > img{width:46px!important;height:46px!important;max-width:46px!important;max-height:46px!important}
+      .mawe-cat-face{width:46px!important;height:46px!important;font-size:46px!important;flex-basis:46px!important}
       header>div:first-child>div:nth-child(2){max-width:calc(100% - 104px)!important}
       header h1{font-size:34px!important}
       header h1+button{font-size:13px!important;padding:7px 13px!important}
@@ -99,8 +105,14 @@ export default function CatHeaderDynamic() {
     const toggle = title?.parentElement?.querySelector('button') as HTMLButtonElement | null
     if (toggle) toggle.innerHTML = '<span style="color:#b7f34a">●</span> กำลังใช้งาน'
     const iconBox = header.querySelector(':scope > div:first-child > div:first-child') as HTMLElement | null
-    const catGraphic = iconBox?.querySelector('svg, img') as HTMLElement | null
-    if (catGraphic) catGraphic.style.filter = catColorFilter(catColor)
+    if (iconBox) {
+      iconBox.innerHTML = ''
+      const catFace = document.createElement('span')
+      catFace.className = 'mawe-cat-face'
+      catFace.textContent = catColorEmoji(catColor)
+      catFace.style.filter = catColorFilter(catColor)
+      iconBox.appendChild(catFace)
+    }
     const oldBubble = header.querySelector('[class*="bg-white/20"]') as HTMLElement | null
     if (oldBubble) {
       oldBubble.classList.add('mawe-header-quote')
