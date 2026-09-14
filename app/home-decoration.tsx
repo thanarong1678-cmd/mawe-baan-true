@@ -33,6 +33,11 @@ export default function HomeDecoration() {
     if (!error && data) setItems(v => [...v, {...data, x:Number(data.x), y:Number(data.y), rotation:Number(data.rotation)}])
   }
 
+  const deleteItem = async (id: string) => {
+    const { error } = await supabase.from('home_decorations').delete().eq('id', id)
+    if (!error) setItems(v => v.filter(i => i.id !== id))
+  }
+
   const moveItem = async (id: string, e: React.PointerEvent) => {
     const target = e.currentTarget.parentElement?.parentElement
     if (!target) return
@@ -55,8 +60,11 @@ export default function HomeDecoration() {
     {open && <div className="home-decoration-panel">
       <strong>🏠 ตกแต่งบ้านแมว</strong>
       <div className="home-decoration-items">{ITEMS.map(([type, emoji, label]) => <button key={type} onClick={() => addItem(type)}>{emoji}<span>{label}</span></button>)}</div>
-      <small>แตะของตกแต่งเพื่อเพิ่ม แล้วลากไปวางในบ้านได้</small>
+      <small>แตะของตกแต่งเพื่อเพิ่ม แล้วลากไปวางในบ้านได้ · กด ✕ เพื่อลบ</small>
     </div>}
-    <div className="home-decoration-layer">{items.map(item => <div key={item.id} className="home-decoration-object" style={{left:`${item.x}%`,top:`${item.y}%`,transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`}} onPointerDown={e => { setDrag(item.id); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }} onPointerMove={e => { if (drag === item.id) moveItem(item.id,e) }} onPointerUp={() => finishMove(item.id)}>{icon(item.item_type)}</div>)}</div>
+    <div className="home-decoration-layer">{items.map(item => <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
+      <div className="home-decoration-object" style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`}} onPointerDown={e => { setDrag(item.id); (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) }} onPointerMove={e => { if (drag === item.id) moveItem(item.id,e) }} onPointerUp={() => finishMove(item.id)}>{icon(item.item_type)}</div>
+      <button className="home-decoration-delete" aria-label="ลบของตกแต่ง" onPointerDown={e => e.stopPropagation()} onClick={() => deleteItem(item.id)}>✕</button>
+    </div>)}</div>
   </>
 }
