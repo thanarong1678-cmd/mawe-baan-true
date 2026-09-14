@@ -31,7 +31,6 @@ body {
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button { transition: transform .18s ease, box-shadow .18s ease, filter .18s ease, background-color .18s ease; }
 
-/* Mawe Baan: warm, playful, mobile-first visual layer */
 main {
   position: relative;
   isolation: isolate;
@@ -81,14 +80,16 @@ section:nth-of-type(3) { animation-delay: .10s; }
 section:nth-of-type(4) { animation-delay: .15s; }
 section:nth-of-type(5) { animation-delay: .20s; }
 
-/* Header ตามแบบภาพตัวอย่าง */
+/* Header: responsive และล็อกสัดส่วนไอคอนแมวไม่ให้ยืด */
 header {
+  position: relative;
   min-height: 121px;
   background: linear-gradient(112deg, #f7a500 0%, #ff8616 47%, #ff6f68 100%) !important;
   border: 1px solid rgba(255,255,255,.38) !important;
   border-radius: 24px !important;
   box-shadow: 0 16px 38px rgba(234,88,12,.16), 0 3px 10px rgba(180,83,9,.08) !important;
   animation: maweHero .65s cubic-bezier(.2,.8,.2,1) both;
+  overflow: hidden;
 }
 header::before {
   content: "";
@@ -100,8 +101,36 @@ header::before {
   border-radius: 50%;
   background: rgba(255,255,255,.14);
   animation: maweFloat 6s ease-in-out infinite;
+  pointer-events: none;
 }
 header > div { min-height: 80px; }
+
+/* กล่อง avatar ตัวแรก: ต้องเป็นวงกลมเสมอทุกอุปกรณ์ */
+header > div:first-child > div:first-child > div:first-child {
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 112px !important;
+  min-height: 112px !important;
+  max-width: 112px !important;
+  max-height: 112px !important;
+  aspect-ratio: 1 / 1 !important;
+  flex: 0 0 112px !important;
+  flex-shrink: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+  transform: none !important;
+}
+header > div:first-child > div:first-child > div:first-child * {
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+  max-width: 100%;
+}
+
 header h1 {
   font-size: 22px !important;
   line-height: 1.05 !important;
@@ -125,9 +154,7 @@ header .bg-white\/20 {
   color: #7c2d12 !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
 }
-header > div > div:first-child > div:first-child {
-  align-items: center;
-}
+header > div > div:first-child > div:first-child { align-items: center; }
 header button:hover { transform: translateY(-2px) scale(1.03); }
 
 .wallpaper-day, .wallpaper-night {
@@ -175,12 +202,53 @@ button.bg-amber-500:hover, button.bg-orange-500:hover {
 @keyframes maweFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes maweFloat { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(0,-10px,0); } }
 
+/* Desktop */
+@media (min-width: 1101px) {
+  header > div:first-child > div:first-child > div:first-child {
+    width: 112px !important;
+    height: 112px !important;
+    min-width: 112px !important;
+    min-height: 112px !important;
+    max-width: 112px !important;
+    max-height: 112px !important;
+    flex-basis: 112px !important;
+    font-size: 54px !important;
+  }
+}
+
+/* iPad / Tablet */
+@media (min-width: 641px) and (max-width: 1100px) {
+  header { min-height: 180px; }
+  header > div:first-child > div:first-child > div:first-child {
+    width: 88px !important;
+    height: 88px !important;
+    min-width: 88px !important;
+    min-height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
+    flex-basis: 88px !important;
+    font-size: 43px !important;
+  }
+}
+
+/* Mobile */
 @media (max-width: 640px) {
   main { padding: 12px !important; }
   .max-w-2xl { width: 100%; }
   section, header { border-radius: 24px !important; }
   header { min-height: 0; }
   header > div { align-items: center; }
+  header > div:first-child > div:first-child > div:first-child {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    flex-basis: 64px !important;
+    font-size: 31px !important;
+    border-width: 4px !important;
+  }
   header h1 { font-size: 19px !important; }
   header .bg-white\/20 { max-width: 100%; }
   .wallpaper-day, .wallpaper-night { min-height: 220px; }
