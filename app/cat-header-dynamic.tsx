@@ -18,6 +18,7 @@ function ensureStockStyles() {
   const style = document.createElement('style')
   style.id = 'mawe-header-stock-styles'
   style.textContent = `
+    /* 💻 คอม: Header แบบภาพตัวอย่าง */
     .mawe-header-stock{position:absolute;right:235px;top:50%;transform:translateY(-50%);display:flex;gap:12px;align-items:center;z-index:6}
     .mawe-stock-card{width:175px;min-height:112px;padding:12px 13px;border-radius:22px;background:rgba(255,250,242,.97);border:1px solid rgba(255,255,255,.92);box-shadow:0 8px 24px rgba(124,45,18,.13);color:#7c461f;display:grid;grid-template-columns:48px 1fr;grid-template-rows:1fr auto;gap:3px 8px}
     .mawe-stock-icon{grid-row:1/span 2;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#fff0dc;font-size:29px}
@@ -27,7 +28,45 @@ function ensureStockStyles() {
     .mawe-header-sleepy{position:absolute;right:95px;bottom:-18px;font-size:92px;filter:drop-shadow(0 7px 4px rgba(124,45,18,.16));z-index:5;line-height:1}.mawe-header-paws{position:absolute;right:315px;top:15px;font-size:28px;opacity:.35;transform:rotate(-10deg);z-index:1}.mawe-header-paws:after{content:'🐾  🐾';display:block;transform:translate(28px,35px) rotate(12deg)}
     .mawe-header-quote{display:flex!important;align-items:center;justify-content:space-between!important;gap:8px;width:min(620px,100%)!important;max-width:none!important;padding:11px 17px!important;border-radius:999px!important;background:rgba(255,239,211,.38)!important;border:2px solid rgba(255,255,255,.74)!important;color:#7b451d!important;font-size:14px!important;font-weight:800!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(124,45,18,.06)!important}.mawe-header-quote .mawe-arrow{font-size:29px;color:#fff;text-shadow:0 2px 3px rgba(124,45,18,.12);line-height:1}.mawe-header-quote-text{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     header>div:first-child>div:first-child{width:100%}header>div:first-child>div:first-child>div:first-child{width:112px;height:112px;font-size:54px;border-width:5px;flex:none}header h1{font-size:43px!important;line-height:1!important;color:#fff!important;text-shadow:0 3px 8px rgba(124,45,18,.2)}header h1+button{font-size:16px!important;padding:9px 18px!important;border-radius:999px!important;background:rgba(126,78,22,.68)!important}header>div:first-child>div:nth-child(2){flex:1;min-width:0}
-    @media(max-width:1450px){.mawe-header-stock{right:220px}.mawe-stock-card{width:150px}.mawe-header-sleepy{right:55px}.mawe-header-note{display:none}}@media(max-width:1100px){.mawe-header-stock{right:18px;top:auto;bottom:14px;transform:none}.mawe-stock-card{min-height:88px;width:140px}.mawe-header-sleepy{display:none}.mawe-header-paws{display:none}}@media(max-width:800px){.mawe-header-stock{display:none}header h1{font-size:28px!important}header>div:first-child>div:first-child>div:first-child{width:82px;height:82px;font-size:40px}.mawe-header-quote{width:100%!important;font-size:12px!important}.mawe-header-note{display:none}}
+
+    /* 📱 โทรศัพท์: จัด Header เป็นแนวตั้งและให้สต็อกใช้งานได้บนมือถือ */
+    @media(max-width:767px){
+      header{display:flex!important;flex-direction:column!important;gap:10px!important;padding:14px!important}
+      header>div:first-child{width:100%!important;display:flex!important;align-items:center!important;gap:10px!important}
+      header>div:first-child>div:first-child>div:first-child{width:68px;height:68px;font-size:34px;border-width:4px}
+      header h1{font-size:26px!important}
+      header h1+button{font-size:11px!important;padding:6px 10px!important}
+      .mawe-header-quote{width:100%!important;font-size:11px!important;padding:9px 11px!important}
+      .mawe-header-quote .mawe-arrow{font-size:23px}
+      .mawe-header-stock{position:static!important;transform:none!important;width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;order:2!important}
+      .mawe-stock-card{width:auto!important;min-height:82px!important;padding:9px!important;border-radius:16px!important;grid-template-columns:36px 1fr!important;gap:3px 6px!important}
+      .mawe-stock-icon{width:36px;height:36px;font-size:22px}
+      .mawe-stock-label{font-size:11px}.mawe-stock-value{font-size:10px}.mawe-stock-value strong{font-size:21px}.mawe-stock-owner{font-size:8px}.mawe-stock-controls button{width:25px;height:22px}
+      .mawe-header-sleepy,.mawe-header-note,.mawe-header-paws{display:none!important}
+    }
+
+    /* 📱 iPad: พื้นที่กว้างกว่าโทรศัพท์ จัดสต็อก 2 ใบใต้ Header */
+    @media(min-width:768px) and (max-width:1100px){
+      header{display:flex!important;flex-direction:column!important;gap:12px!important}
+      header>div:first-child{width:100%!important}
+      header>div:first-child>div:first-child>div:first-child{width:92px;height:92px;font-size:46px}
+      header h1{font-size:34px!important}
+      header h1+button{font-size:13px!important;padding:7px 13px!important}
+      .mawe-header-quote{width:100%!important;font-size:13px!important}
+      .mawe-header-stock{position:static!important;transform:none!important;width:100%!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;order:2!important}
+      .mawe-stock-card{width:auto!important;min-height:96px!important}
+      .mawe-header-sleepy{display:none!important}.mawe-header-note{display:none!important}.mawe-header-paws{display:none!important}
+    }
+
+    /* 🖥️ จอคอมเล็ก */
+    @media(min-width:1101px) and (max-width:1450px){
+      .mawe-header-stock{right:220px}.mawe-stock-card{width:150px}.mawe-header-sleepy{right:55px}.mawe-header-note{display:none}
+    }
+
+    /* 🖥️ จอคอมใหญ่ */
+    @media(min-width:1451px){
+      .mawe-header-stock{right:235px}.mawe-stock-card{width:175px}
+    }
   `
   document.head.appendChild(style)
 }
