@@ -9,6 +9,7 @@ import CatHeaderDynamic from "./cat-header-dynamic";
 import DesktopHeaderFix from "./desktop-header-fix";
 import DesktopStockFix from "./desktop-stock-fix";
 import HomeDecoration from "./home-decoration";
+import LitterChangeDate from "./litter-change-date";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <CatHeaderDynamic />
           <DesktopHeaderFix />
           <DesktopStockFix />
+          <LitterChangeDate />
           <HomeDecoration />
           {children}
         </AuthGuard>
