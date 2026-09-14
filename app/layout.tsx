@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./cat-history-collapse.css";
-import "./cat-house-animation.css";
 import "./home-decoration.css";
 import AuthGuard from "./auth-guard";
 import CatHistoryCollapse from "./cat-history-collapse";
 import CatHeaderDynamic from "./cat-header-dynamic";
 import DesktopHeaderFix from "./desktop-header-fix";
+import DesktopStockFix from "./desktop-stock-fix";
 import HomeDecoration from "./home-decoration";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -23,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <CatHistoryCollapse />
           <CatHeaderDynamic />
           <DesktopHeaderFix />
+          <DesktopStockFix />
           <HomeDecoration />
           {children}
         </AuthGuard>
