@@ -37,37 +37,39 @@ function ensureStyles() {
   const style = document.createElement('style')
   style.id = 'mawe-header-stock-styles'
   style.textContent = `
-    /* สต็อก 2 ช่องอยู่ด้านล่างของหัวสีส้ม โดยไม่ทับข้อความ */
+    /* แบ่ง Header เป็นพื้นที่ข้อความด้านบน + สต็อกด้านล่างอย่างชัดเจน */
+    header { position:relative !important; overflow:hidden !important; box-sizing:border-box !important; padding-bottom:124px !important; }
+
     .mawe-header-stock {
-      position: absolute !important;
-      left: 50% !important;
-      bottom: 14px !important;
-      transform: translateX(-50%) !important;
-      width: min(560px, calc(100% - 300px)) !important;
-      margin: 0 !important;
-      display: grid !important;
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
-      align-items: stretch !important;
-      z-index: 30 !important;
-      box-sizing: border-box !important;
+      position:absolute !important;
+      left:50% !important;
+      bottom:14px !important;
+      transform:translateX(-50%) !important;
+      width:min(520px, calc(100% - 40px)) !important;
+      margin:0 !important;
+      display:grid !important;
+      grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+      gap:12px !important;
+      align-items:stretch !important;
+      z-index:20 !important;
+      box-sizing:border-box !important;
     }
     .mawe-stock-card {
-      min-width: 0;
-      min-height: 88px;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      border-radius: 18px;
-      background: rgba(255,250,242,.98);
-      border: 1px solid rgba(255,255,255,.95);
-      box-shadow: 0 7px 22px rgba(124,45,18,.12);
-      color: #7c461f;
-      display: grid;
-      grid-template-columns: 40px minmax(0,1fr);
-      grid-template-rows: 1fr auto;
-      gap: 3px 7px;
+      min-width:0;
+      min-height:90px;
+      box-sizing:border-box;
+      padding:10px 12px;
+      border-radius:18px;
+      background:rgba(255,250,242,.98);
+      border:1px solid rgba(255,255,255,.95);
+      box-shadow:0 7px 22px rgba(124,45,18,.12);
+      color:#7c461f;
+      display:grid;
+      grid-template-columns:40px minmax(0,1fr);
+      grid-template-rows:1fr auto;
+      gap:3px 7px;
     }
-    .mawe-stock-icon { grid-row: 1 / span 2; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#fff0dc; font-size:25px; line-height:1; }
+    .mawe-stock-icon { grid-row:1 / span 2; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#fff0dc; font-size:25px; line-height:1; }
     .mawe-stock-label { font-size:13px; font-weight:900; line-height:1.1; }
     .mawe-stock-value { font-size:12px; line-height:1.1; }
     .mawe-stock-value strong { font-size:25px; color:#8a531f; }
@@ -77,21 +79,20 @@ function ensureStyles() {
     .mawe-stock-controls button:last-child { background:#ffbd63; color:#fff; }
     .mawe-stock-date-card { display:none !important; }
 
-    /* ลดแมวตกแต่ง ไม่ให้ล้ำออกนอกแถบสีส้ม */
-    .mawe-header-sleepy { position:absolute; right:18px; bottom:10px; font-size:58px; filter:drop-shadow(0 5px 3px rgba(124,45,18,.16)); z-index:8; line-height:1; }
-    .mawe-header-note { position:absolute; right:18px; top:7px; width:115px; padding:10px 8px 12px; background:#fff7e8; color:#8a5428; border:2px solid #f3c77e; border-radius:10px 10px 20px 20px; box-shadow:0 6px 12px rgba(124,45,18,.1); font-size:10px; font-weight:900; text-align:center; transform:rotate(3deg); z-index:7; }
-    .mawe-header-note:before { content:'•'; position:absolute; left:50%; top:-21px; font-size:34px; color:#8a461d; }
-    .mawe-header-paws { position:absolute; right:300px; top:15px; font-size:25px; opacity:.35; transform:rotate(-10deg); z-index:1; }
-    .mawe-header-paws:after { content:'🐾  🐾'; display:block; transform:translate(25px,32px) rotate(12deg); }
+    /* แมวตกแต่งอยู่ในกรอบ ไม่ล้นออกนอก Header และไม่ชนสต็อก */
+    .mawe-header-sleepy { position:absolute; right:16px; top:10px; bottom:auto; font-size:44px; filter:drop-shadow(0 5px 3px rgba(124,45,18,.16)); z-index:4; line-height:1; }
+    .mawe-header-note { position:absolute; right:72px; top:7px; width:100px; padding:8px 7px 9px; background:#fff7e8; color:#8a5428; border:2px solid #f3c77e; border-radius:10px 10px 18px 18px; box-shadow:0 6px 12px rgba(124,45,18,.1); font-size:9px; font-weight:900; text-align:center; transform:rotate(3deg); z-index:3; }
+    .mawe-header-note:before { content:'•'; position:absolute; left:50%; top:-20px; font-size:30px; color:#8a461d; }
+    .mawe-header-paws { position:absolute; right:270px; top:15px; font-size:23px; opacity:.3; transform:rotate(-10deg); z-index:1; }
+    .mawe-header-paws:after { content:'🐾  🐾'; display:block; transform:translate(22px,28px) rotate(12deg); }
 
-    .mawe-header-quote { display:flex!important; align-items:center; justify-content:space-between!important; gap:8px; width:min(390px,100%)!important; max-width:390px!important; padding:11px 17px!important; border-radius:999px!important; background:rgba(255,239,211,.38)!important; border:2px solid rgba(255,255,255,.74)!important; color:#7b451d!important; font-size:14px!important; font-weight:800!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(124,45,18,.06)!important; overflow:hidden!important; }
+    .mawe-header-quote { display:flex!important; align-items:center; justify-content:space-between!important; gap:8px; width:min(390px,100%)!important; max-width:390px!important; padding:11px 17px!important; margin-bottom:8px!important; border-radius:999px!important; background:rgba(255,239,211,.38)!important; border:2px solid rgba(255,255,255,.74)!important; color:#7b451d!important; font-size:14px!important; font-weight:800!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(124,45,18,.06)!important; overflow:hidden!important; position:relative!important; z-index:10!important; }
     .mawe-header-quote .mawe-arrow { font-size:29px; color:#fff; text-shadow:0 2px 3px rgba(124,45,18,.12); line-height:1; flex:0 0 auto; cursor:pointer; user-select:none; }
     .mawe-header-quote .mawe-arrow:hover { transform:scale(1.18); }
     .mawe-header-quote .mawe-arrow:active { transform:scale(.92); }
     .mawe-header-quote-text { flex:1; min-width:0; text-align:center; white-space:nowrap; overflow-x:auto; overflow-y:hidden; text-overflow:clip; scrollbar-width:none; touch-action:pan-x; }
     .mawe-header-quote-text::-webkit-scrollbar { display:none; }
 
-    header { position:relative !important; overflow:hidden !important; }
     header>div:first-child>div:first-child { width:112px!important; height:112px!important; min-width:112px!important; min-height:112px!important; flex:0 0 112px!important; font-size:54px!important; border-width:5px!important; display:flex!important; align-items:center!important; justify-content:center!important; overflow:hidden!important; aspect-ratio:1/1!important; }
     .mawe-cat-face { display:block!important; width:54px!important; height:54px!important; line-height:1!important; font-size:54px!important; flex:0 0 54px!important; text-align:center!important; transform:none!important; filter:none; }
     header>div:first-child>div:nth-child(2) { flex:1 1 auto!important; min-width:0!important; max-width:calc(100% - 124px)!important; }
@@ -99,16 +100,15 @@ function ensureStyles() {
     header h1+button { font-size:16px!important; padding:9px 18px!important; border-radius:999px!important; background:rgba(126,78,22,.68)!important; }
 
     @media(max-width:1100px) {
-      /* แท็บเล็ต: ยังอยู่ในหัวสีส้ม แต่ให้เต็มพื้นที่ด้านล่างข้อความ */
+      header { padding-bottom:118px !important; }
       .mawe-header-stock { width:calc(100% - 28px)!important; bottom:10px!important; gap:9px!important; }
-      .mawe-stock-card { min-height:82px; }
-      .mawe-header-sleepy { right:10px; bottom:8px; font-size:48px; }
-      header { padding-bottom:105px !important; }
+      .mawe-stock-card { min-height:84px; }
+      .mawe-header-sleepy { right:10px; top:9px; font-size:40px; }
+      .mawe-header-note { right:58px; top:7px; }
     }
 
     @media(max-width:767px) {
-      /* มือถือ: ขยายความสูงหัวให้สต็อกมีพื้นที่ของตัวเอง ไม่ทับ quote */
-      header { padding-bottom:104px !important; overflow:hidden !important; }
+      header { padding-bottom:108px !important; overflow:hidden !important; }
       .mawe-header-stock { width:calc(100% - 20px)!important; bottom:8px!important; gap:8px!important; }
       .mawe-stock-card { min-height:76px; padding:8px; border-radius:15px; grid-template-columns:31px minmax(0,1fr); gap:3px 5px; }
       .mawe-stock-icon { width:31px; height:31px; font-size:19px; }
@@ -122,7 +122,7 @@ function ensureStyles() {
       header>div:first-child>div:nth-child(2) { max-width:calc(100% - 78px)!important; }
       header h1 { font-size:26px!important; }
       header h1+button { font-size:11px!important; padding:6px 10px!important; }
-      .mawe-header-quote { width:100%!important; max-width:none!important; font-size:11px!important; padding:9px 11px!important; }
+      .mawe-header-quote { width:100%!important; max-width:none!important; font-size:11px!important; padding:9px 11px!important; margin-bottom:4px!important; }
       .mawe-header-quote .mawe-arrow { font-size:23px; }
       .mawe-header-sleepy,.mawe-header-note,.mawe-header-paws { display:none!important; }
     }
