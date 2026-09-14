@@ -87,15 +87,26 @@ export default function CatLitterUser() {
   useEffect(() => {
     if (pathname !== '/') return
 
-    const sections = Array.from(document.querySelectorAll('section'))
-    const oldStock = sections.find((section) => {
-      const text = section.textContent || ''
-      return text.includes('ทรายแมว') && text.includes('กระบะทราย')
-    }) as HTMLElement | undefined
+    const hideLegacy = () => {
+      const sections = Array.from(document.querySelectorAll('section'))
+      const oldStock = sections.find((section) => {
+        const text = section.textContent || ''
+        return text.includes('ทรายแมว') && text.includes('กระบะทราย')
+      }) as HTMLElement | undefined
 
-    if (oldStock) {
+      if (!oldStock) return false
       oldStock.dataset.maweLegacyLitter = 'true'
+      return true
     }
+
+    if (hideLegacy()) return
+
+    const observer = new MutationObserver(() => {
+      if (hideLegacy()) observer.disconnect()
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    return () => observer.disconnect()
   }, [pathname, ready])
 
   const save = async () => {
