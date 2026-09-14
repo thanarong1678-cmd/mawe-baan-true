@@ -37,67 +37,86 @@ function ensureStyles() {
   const style = document.createElement('style')
   style.id = 'mawe-header-stock-styles'
   style.textContent = `
+    /* สต็อก 2 ช่องอยู่ด้านล่างของหัวสีส้ม โดยไม่ทับข้อความ */
     .mawe-header-stock {
-      width: min(920px, calc(100% - 28px));
-      margin: 12px auto 16px;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      align-items: stretch;
-      position: relative;
-      z-index: 30;
-      box-sizing: border-box;
+      position: absolute !important;
+      left: 50% !important;
+      bottom: 14px !important;
+      transform: translateX(-50%) !important;
+      width: min(560px, calc(100% - 300px)) !important;
+      margin: 0 !important;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      align-items: stretch !important;
+      z-index: 30 !important;
+      box-sizing: border-box !important;
     }
     .mawe-stock-card {
       min-width: 0;
-      min-height: 100px;
+      min-height: 88px;
       box-sizing: border-box;
-      padding: 12px 14px;
-      border-radius: 22px;
+      padding: 10px 12px;
+      border-radius: 18px;
       background: rgba(255,250,242,.98);
       border: 1px solid rgba(255,255,255,.95);
       box-shadow: 0 7px 22px rgba(124,45,18,.12);
       color: #7c461f;
       display: grid;
-      grid-template-columns: 46px minmax(0,1fr);
+      grid-template-columns: 40px minmax(0,1fr);
       grid-template-rows: 1fr auto;
-      gap: 3px 8px;
+      gap: 3px 7px;
     }
-    .mawe-stock-icon { grid-row: 1 / span 2; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; background:#fff0dc; font-size:28px; line-height:1; }
-    .mawe-stock-label { font-size:14px; font-weight:900; line-height:1.1; }
-    .mawe-stock-value { font-size:13px; line-height:1.1; }
-    .mawe-stock-value strong { font-size:28px; color:#8a531f; }
-    .mawe-stock-owner { font-size:9px; font-weight:800; color:#b87843; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mawe-stock-icon { grid-row: 1 / span 2; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:#fff0dc; font-size:25px; line-height:1; }
+    .mawe-stock-label { font-size:13px; font-weight:900; line-height:1.1; }
+    .mawe-stock-value { font-size:12px; line-height:1.1; }
+    .mawe-stock-value strong { font-size:25px; color:#8a531f; }
+    .mawe-stock-owner { font-size:8px; font-weight:800; color:#b87843; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .mawe-stock-controls { grid-column:2; display:flex; justify-content:flex-end; gap:5px; }
-    .mawe-stock-controls button { width:28px; height:25px; border:0; border-radius:9px; background:#ffe0aa; color:#8a4b20; font-weight:900; cursor:pointer; touch-action:manipulation; pointer-events:auto; }
+    .mawe-stock-controls button { width:28px; height:25px; border:0; border-radius:9px; background:#ffe0aa; color:#8a4b20; font-weight:900; cursor:pointer; touch-action:manipulation; pointer-events:auto; position:relative; z-index:40; }
     .mawe-stock-controls button:last-child { background:#ffbd63; color:#fff; }
     .mawe-stock-date-card { display:none !important; }
-    .mawe-header-note { position:absolute; right:18px; top:7px; width:135px; padding:12px 10px 15px; background:#fff7e8; color:#8a5428; border:2px solid #f3c77e; border-radius:10px 10px 22px 22px; box-shadow:0 6px 12px rgba(124,45,18,.1); font-size:11px; font-weight:900; text-align:center; transform:rotate(3deg); z-index:7; }
+
+    /* ลดแมวตกแต่ง ไม่ให้ล้ำออกนอกแถบสีส้ม */
+    .mawe-header-sleepy { position:absolute; right:18px; bottom:10px; font-size:58px; filter:drop-shadow(0 5px 3px rgba(124,45,18,.16)); z-index:8; line-height:1; }
+    .mawe-header-note { position:absolute; right:18px; top:7px; width:115px; padding:10px 8px 12px; background:#fff7e8; color:#8a5428; border:2px solid #f3c77e; border-radius:10px 10px 20px 20px; box-shadow:0 6px 12px rgba(124,45,18,.1); font-size:10px; font-weight:900; text-align:center; transform:rotate(3deg); z-index:7; }
     .mawe-header-note:before { content:'•'; position:absolute; left:50%; top:-21px; font-size:34px; color:#8a461d; }
-    .mawe-header-sleepy { position:absolute; right:95px; bottom:-18px; font-size:92px; filter:drop-shadow(0 7px 4px rgba(124,45,18,.16)); z-index:5; line-height:1; }
-    .mawe-header-paws { position:absolute; right:315px; top:15px; font-size:28px; opacity:.35; transform:rotate(-10deg); z-index:1; }
-    .mawe-header-paws:after { content:'🐾  🐾'; display:block; transform:translate(28px,35px) rotate(12deg); }
+    .mawe-header-paws { position:absolute; right:300px; top:15px; font-size:25px; opacity:.35; transform:rotate(-10deg); z-index:1; }
+    .mawe-header-paws:after { content:'🐾  🐾'; display:block; transform:translate(25px,32px) rotate(12deg); }
+
     .mawe-header-quote { display:flex!important; align-items:center; justify-content:space-between!important; gap:8px; width:min(390px,100%)!important; max-width:390px!important; padding:11px 17px!important; border-radius:999px!important; background:rgba(255,239,211,.38)!important; border:2px solid rgba(255,255,255,.74)!important; color:#7b451d!important; font-size:14px!important; font-weight:800!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 12px rgba(124,45,18,.06)!important; overflow:hidden!important; }
     .mawe-header-quote .mawe-arrow { font-size:29px; color:#fff; text-shadow:0 2px 3px rgba(124,45,18,.12); line-height:1; flex:0 0 auto; cursor:pointer; user-select:none; }
     .mawe-header-quote .mawe-arrow:hover { transform:scale(1.18); }
     .mawe-header-quote .mawe-arrow:active { transform:scale(.92); }
     .mawe-header-quote-text { flex:1; min-width:0; text-align:center; white-space:nowrap; overflow-x:auto; overflow-y:hidden; text-overflow:clip; scrollbar-width:none; touch-action:pan-x; }
     .mawe-header-quote-text::-webkit-scrollbar { display:none; }
+
+    header { position:relative !important; overflow:hidden !important; }
     header>div:first-child>div:first-child { width:112px!important; height:112px!important; min-width:112px!important; min-height:112px!important; flex:0 0 112px!important; font-size:54px!important; border-width:5px!important; display:flex!important; align-items:center!important; justify-content:center!important; overflow:hidden!important; aspect-ratio:1/1!important; }
     .mawe-cat-face { display:block!important; width:54px!important; height:54px!important; line-height:1!important; font-size:54px!important; flex:0 0 54px!important; text-align:center!important; transform:none!important; filter:none; }
     header>div:first-child>div:nth-child(2) { flex:1 1 auto!important; min-width:0!important; max-width:calc(100% - 124px)!important; }
     header h1 { font-size:43px!important; line-height:1!important; color:#fff!important; text-shadow:0 3px 8px rgba(124,45,18,.2); }
     header h1+button { font-size:16px!important; padding:9px 18px!important; border-radius:999px!important; background:rgba(126,78,22,.68)!important; }
+
+    @media(max-width:1100px) {
+      /* แท็บเล็ต: ยังอยู่ในหัวสีส้ม แต่ให้เต็มพื้นที่ด้านล่างข้อความ */
+      .mawe-header-stock { width:calc(100% - 28px)!important; bottom:10px!important; gap:9px!important; }
+      .mawe-stock-card { min-height:82px; }
+      .mawe-header-sleepy { right:10px; bottom:8px; font-size:48px; }
+      header { padding-bottom:105px !important; }
+    }
+
     @media(max-width:767px) {
-      .mawe-header-stock { width:calc(100% - 28px); grid-template-columns:1fr 1fr; gap:8px; margin:10px auto 14px; }
-      .mawe-stock-card { min-height:88px; padding:9px; border-radius:16px; grid-template-columns:34px minmax(0,1fr); gap:3px 6px; }
-      .mawe-stock-icon { width:34px; height:34px; font-size:21px; }
-      .mawe-stock-label { font-size:11px; }
-      .mawe-stock-value { font-size:10px; }
-      .mawe-stock-value strong { font-size:21px; }
+      /* มือถือ: ขยายความสูงหัวให้สต็อกมีพื้นที่ของตัวเอง ไม่ทับ quote */
+      header { padding-bottom:104px !important; overflow:hidden !important; }
+      .mawe-header-stock { width:calc(100% - 20px)!important; bottom:8px!important; gap:8px!important; }
+      .mawe-stock-card { min-height:76px; padding:8px; border-radius:15px; grid-template-columns:31px minmax(0,1fr); gap:3px 5px; }
+      .mawe-stock-icon { width:31px; height:31px; font-size:19px; }
+      .mawe-stock-label { font-size:10px; }
+      .mawe-stock-value { font-size:9px; }
+      .mawe-stock-value strong { font-size:20px; }
       .mawe-stock-owner { font-size:7px; }
-      .mawe-stock-controls button { width:25px; height:22px; }
-      .mawe-stock-date-card { display:none!important; }
+      .mawe-stock-controls button { width:24px; height:21px; }
       header>div:first-child>div:first-child { width:68px!important; height:68px!important; min-width:68px!important; min-height:68px!important; flex:0 0 68px!important; font-size:34px!important; border-width:4px!important; }
       .mawe-cat-face { width:36px!important; height:36px!important; font-size:36px!important; flex-basis:36px!important; }
       header>div:first-child>div:nth-child(2) { max-width:calc(100% - 78px)!important; }
@@ -105,19 +124,6 @@ function ensureStyles() {
       header h1+button { font-size:11px!important; padding:6px 10px!important; }
       .mawe-header-quote { width:100%!important; max-width:none!important; font-size:11px!important; padding:9px 11px!important; }
       .mawe-header-quote .mawe-arrow { font-size:23px; }
-      .mawe-header-sleepy,.mawe-header-note,.mawe-header-paws { display:none!important; }
-    }
-    @media(min-width:768px) and (max-width:1100px) {
-      .mawe-header-stock { width:calc(100% - 28px); gap:9px; }
-      .mawe-stock-card { min-height:94px; }
-      .mawe-stock-label { font-size:13px; }
-      .mawe-stock-value strong { font-size:25px; }
-      header>div:first-child>div:first-child { width:92px!important; height:92px!important; min-width:92px!important; min-height:92px!important; flex:0 0 92px!important; font-size:46px!important; }
-      .mawe-cat-face { width:46px!important; height:46px!important; font-size:46px!important; flex-basis:46px!important; }
-      header>div:first-child>div:nth-child(2) { max-width:calc(100% - 104px)!important; }
-      header h1 { font-size:34px!important; }
-      header h1+button { font-size:13px!important; padding:7px 13px!important; }
-      .mawe-header-quote { width:100%!important; max-width:none!important; font-size:13px!important; }
       .mawe-header-sleepy,.mawe-header-note,.mawe-header-paws { display:none!important; }
     }
   `
