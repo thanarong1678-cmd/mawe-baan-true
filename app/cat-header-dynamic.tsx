@@ -41,7 +41,7 @@ function ensureStyles() {
       width: min(920px, calc(100% - 28px));
       margin: 12px auto 16px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       align-items: stretch;
       position: relative;
@@ -69,13 +69,9 @@ function ensureStyles() {
     .mawe-stock-value strong { font-size:28px; color:#8a531f; }
     .mawe-stock-owner { font-size:9px; font-weight:800; color:#b87843; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .mawe-stock-controls { grid-column:2; display:flex; justify-content:flex-end; gap:5px; }
-    .mawe-stock-controls button { width:28px; height:25px; border:0; border-radius:9px; background:#ffe0aa; color:#8a4b20; font-weight:900; cursor:pointer; touch-action:manipulation; }
+    .mawe-stock-controls button { width:28px; height:25px; border:0; border-radius:9px; background:#ffe0aa; color:#8a4b20; font-weight:900; cursor:pointer; touch-action:manipulation; pointer-events:auto; }
     .mawe-stock-controls button:last-child { background:#ffbd63; color:#fff; }
-    .mawe-stock-date-card { min-width:0; min-height:100px; box-sizing:border-box; padding:12px 14px; border-radius:22px; background:rgba(255,250,242,.98); border:1px solid rgba(255,255,255,.95); box-shadow:0 7px 22px rgba(124,45,18,.12); color:#7c461f; display:flex; align-items:center; gap:12px; }
-    .mawe-stock-date-icon { width:46px; height:46px; flex:0 0 46px; border-radius:50%; display:grid; place-items:center; background:#fff0dc; font-size:27px; }
-    .mawe-stock-date-title { font-size:14px; font-weight:900; line-height:1.1; }
-    .mawe-stock-date-sub { font-size:9px; font-weight:800; color:#b87843; margin-top:5px; }
-    .mawe-stock-date-card input { width:100%; max-width:145px; height:32px; box-sizing:border-box; border:1px solid #f3c77e; border-radius:9px; background:#fff8ed; color:#8a5428; font-size:11px; padding:3px 6px; font-weight:800; cursor:pointer; }
+    .mawe-stock-date-card { display:none !important; }
     .mawe-header-note { position:absolute; right:18px; top:7px; width:135px; padding:12px 10px 15px; background:#fff7e8; color:#8a5428; border:2px solid #f3c77e; border-radius:10px 10px 22px 22px; box-shadow:0 6px 12px rgba(124,45,18,.1); font-size:11px; font-weight:900; text-align:center; transform:rotate(3deg); z-index:7; }
     .mawe-header-note:before { content:'•'; position:absolute; left:50%; top:-21px; font-size:34px; color:#8a461d; }
     .mawe-header-sleepy { position:absolute; right:95px; bottom:-18px; font-size:92px; filter:drop-shadow(0 7px 4px rgba(124,45,18,.16)); z-index:5; line-height:1; }
@@ -101,19 +97,7 @@ function ensureStyles() {
       .mawe-stock-value strong { font-size:21px; }
       .mawe-stock-owner { font-size:7px; }
       .mawe-stock-controls button { width:25px; height:22px; }
-      .mawe-stock-date-card { grid-column:1 / -1; min-height:82px; padding:9px 12px; border-radius:16px; gap:9px; }
-      .mawe-stock-date-icon { width:34px; height:34px; flex-basis:34px; font-size:20px; }
-      .mawe-stock-date-title { font-size:11px; }
-      .mawe-stock-date-sub { font-size:8px; margin-top:3px; }
-      .mawe-stock-date-card input { max-width:130px; height:27px; font-size:9px; }
-    }
-    @media(min-width:768px) and (max-width:1100px) {
-      .mawe-header-stock { width:calc(100% - 28px); gap:9px; }
-      .mawe-stock-card,.mawe-stock-date-card { min-height:94px; }
-      .mawe-stock-label { font-size:13px; }
-      .mawe-stock-value strong { font-size:25px; }
-    }
-    @media(max-width:767px) {
+      .mawe-stock-date-card { display:none!important; }
       header>div:first-child>div:first-child { width:68px!important; height:68px!important; min-width:68px!important; min-height:68px!important; flex:0 0 68px!important; font-size:34px!important; border-width:4px!important; }
       .mawe-cat-face { width:36px!important; height:36px!important; font-size:36px!important; flex-basis:36px!important; }
       header>div:first-child>div:nth-child(2) { max-width:calc(100% - 78px)!important; }
@@ -124,6 +108,10 @@ function ensureStyles() {
       .mawe-header-sleepy,.mawe-header-note,.mawe-header-paws { display:none!important; }
     }
     @media(min-width:768px) and (max-width:1100px) {
+      .mawe-header-stock { width:calc(100% - 28px); gap:9px; }
+      .mawe-stock-card { min-height:94px; }
+      .mawe-stock-label { font-size:13px; }
+      .mawe-stock-value strong { font-size:25px; }
       header>div:first-child>div:first-child { width:92px!important; height:92px!important; min-width:92px!important; min-height:92px!important; flex:0 0 92px!important; font-size:46px!important; }
       .mawe-cat-face { width:46px!important; height:46px!important; font-size:46px!important; flex-basis:46px!important; }
       header>div:first-child>div:nth-child(2) { max-width:calc(100% - 104px)!important; }
@@ -138,13 +126,11 @@ function ensureStyles() {
 
 export default function CatHeaderDynamic() {
   const pathname = usePathname()
-
   const updateHeader = useCallback(async () => {
     if (pathname !== '/') return
     const header = document.querySelector('header') as HTMLElement | null
     if (!header) return
     ensureStyles()
-
     const [{ data: cat }, { data: userResult }] = await Promise.all([
       supabase.from('cats').select('name,color,created_at').order('created_at', { ascending:false }).limit(1).maybeSingle(),
       supabase.auth.getUser(),
@@ -152,12 +138,10 @@ export default function CatHeaderDynamic() {
     const user = userResult?.user
     const catName = cat?.name?.trim() || 'พี่ส้ม'
     const catColor = cat?.color?.trim() || 'ส้ม'
-
     const title = header.querySelector('h1') as HTMLElement | null
     if (title) title.textContent = `${catName} 🐾`
     const toggle = title?.parentElement?.querySelector('button') as HTMLButtonElement | null
     if (toggle) toggle.innerHTML = '<span style="color:#b7f34a">●</span> กำลังใช้งาน'
-
     const iconBox = header.querySelector(':scope > div:first-child > div:first-child') as HTMLElement | null
     if (iconBox) {
       iconBox.innerHTML = ''
@@ -167,7 +151,6 @@ export default function CatHeaderDynamic() {
       catFace.style.filter = catColorFilter(catColor)
       iconBox.appendChild(catFace)
     }
-
     const oldBubble = header.querySelector('[class*="bg-white/20"]') as HTMLElement | null
     if (oldBubble) {
       oldBubble.classList.add('mawe-header-quote')
@@ -197,44 +180,27 @@ export default function CatHeaderDynamic() {
       stockWrap = document.createElement('div')
       stockWrap.className = 'mawe-header-stock'
     }
-    // สำคัญ: ให้สต็อกเป็นพี่น้องกับ header ไม่ใช่อยู่ข้างใน header เพื่อไม่ให้ซ้อนกัน
-    if (stockWrap.parentElement !== header.parentElement || stockWrap.previousElementSibling !== header) {
-      header.after(stockWrap)
-    }
+    if (stockWrap.parentElement !== header) header.appendChild(stockWrap)
 
-    let bags = 0, boxes = 0, litterId = '', changedDate = ''
+    let bags = 0, boxes = 0, litterId = ''
     if (user) {
-      const { data:litter } = await supabase.from('cat_litter').select('id,bags_left,box_count,last_changed_date,last_changed').order('updated_at',{ascending:false}).limit(1).maybeSingle()
+      const { data:litter } = await supabase.from('cat_litter').select('id,bags_left,box_count').order('updated_at',{ascending:false}).limit(1).maybeSingle()
       if (litter) {
         litterId = litter.id
         bags = Number(litter.bags_left) || 0
         boxes = Number(litter.box_count) || 0
-        changedDate = litter.last_changed_date || litter.last_changed || ''
       }
     }
-
     const saveStock = async (nextBags:number, nextBoxes:number) => {
       if (!user) return
       if (litterId) {
         await supabase.from('cat_litter').update({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes) }).eq('id',litterId)
       } else {
         const today = new Date().toISOString().slice(0,10)
-        const { data } = await supabase.from('cat_litter').insert({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes), last_changed:today, last_changed_date:today, user_id:user.id }).select('id').maybeSingle()
-        if (data) { litterId=data.id; changedDate=today }
-      }
-    }
-
-    const saveChangedDate = async (value:string) => {
-      if (!user || !value) return
-      changedDate=value
-      if (litterId) {
-        await supabase.from('cat_litter').update({ last_changed_date:value, last_changed:value }).eq('id',litterId)
-      } else {
-        const { data } = await supabase.from('cat_litter').insert({ bags_left:bags, box_count:boxes, last_changed:value, last_changed_date:value, user_id:user.id }).select('id').maybeSingle()
+        const { data } = await supabase.from('cat_litter').insert({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes), last_changed:today, user_id:user.id }).select('id').maybeSingle()
         if (data) litterId=data.id
       }
     }
-
     stockWrap.innerHTML = `
       <div class="mawe-stock-card">
         <div class="mawe-stock-icon">🛍️</div>
@@ -246,19 +212,12 @@ export default function CatHeaderDynamic() {
         <div><div class="mawe-stock-label">กระบะทราย</div><div class="mawe-stock-value"><strong>${boxes}</strong>/3</div><div class="mawe-stock-owner">🐱 ของ${catName}</div></div>
         <div class="mawe-stock-controls"><button data-stock="xm">−</button><button data-stock="xp">+</button></div>
       </div>
-      <div class="mawe-stock-date-card">
-        <div class="mawe-stock-date-icon">📅</div>
-        <div style="min-width:0;flex:1"><div class="mawe-stock-date-title">เปลี่ยนทราย</div><div class="mawe-stock-date-sub">วันที่เปลี่ยนล่าสุด</div></div>
-        <input type="date" value="${changedDate}" aria-label="วันที่เปลี่ยนทรายล่าสุด" />
-      </div>
     `
-
     const bind = (sel:string, fn:()=>Promise<void>) => stockWrap!.querySelector(sel)?.addEventListener('click', () => { void fn() })
     bind('[data-stock="bm"]', async()=>{ bags=Math.max(0,bags-1); await saveStock(bags,boxes); await updateHeader() })
     bind('[data-stock="bp"]', async()=>{ bags++; await saveStock(bags,boxes); await updateHeader() })
     bind('[data-stock="xm"]', async()=>{ boxes=Math.max(0,boxes-1); await saveStock(bags,boxes); await updateHeader() })
     bind('[data-stock="xp"]', async()=>{ boxes++; await saveStock(bags,boxes); await updateHeader() })
-    stockWrap.querySelector('input[type="date"]')?.addEventListener('change', (e) => { void saveChangedDate((e.target as HTMLInputElement).value) })
 
     let sleepy=header.querySelector('.mawe-header-sleepy') as HTMLElement|null
     if(!sleepy){sleepy=document.createElement('div');sleepy.className='mawe-header-sleepy';header.appendChild(sleepy)}
@@ -268,7 +227,6 @@ export default function CatHeaderDynamic() {
     note.innerHTML='แมวของเราคือ<br>ความสุขเล็กๆ<br>ในทุกวัน<br><span style="font-size:17px">♥</span>'
     let paws=header.querySelector('.mawe-header-paws') as HTMLElement|null
     if(!paws){paws=document.createElement('div');paws.className='mawe-header-paws';header.appendChild(paws)}
-
     const oldStock=Array.from(document.querySelectorAll('section')).find(s => (s.textContent||'').includes('สต็อกทรายแมว') && (s.textContent||'').includes('กระบะทราย')) as HTMLElement|undefined
     if(oldStock) oldStock.style.display='none'
   }, [pathname])
@@ -281,6 +239,5 @@ export default function CatHeaderDynamic() {
     const timer=window.setInterval(()=>{ void run() }, 3000)
     return()=>{ active=false; window.clearInterval(timer) }
   }, [pathname, updateHeader])
-
   return null
 }
