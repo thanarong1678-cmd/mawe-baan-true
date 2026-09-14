@@ -2,37 +2,28 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./cat-history-collapse.css";
+import "./cat-house-animation.css";
+import "./home-decoration.css";
 import AuthGuard from "./auth-guard";
 import CatHistoryCollapse from "./cat-history-collapse";
 import CatHeaderDynamic from "./cat-header-dynamic";
 import DesktopHeaderFix from "./desktop-header-fix";
+import HomeDecoration from "./home-decoration";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Mawe Baan",
-  description: "บ้านสำหรับดูแลน้องแมว",
-};
+export const metadata: Metadata = { title: "Mawe Baan", description: "บ้านสำหรับดูแลน้องแมว" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="th"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="th" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AuthGuard>
           <CatHistoryCollapse />
           <CatHeaderDynamic />
           <DesktopHeaderFix />
+          <HomeDecoration />
           {children}
         </AuthGuard>
       </body>
