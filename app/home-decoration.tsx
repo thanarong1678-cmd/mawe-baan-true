@@ -16,7 +16,7 @@ const ITEMS = [
   ['bowl','🥣','ชามอาหาร'],
   ['catbox','🏠','บ้านน้องแมว'],
 ]
-
+const ITEM_TYPES = new Set(ITEMS.map(i => i[0]))
 const icon = (type: string) => ITEMS.find(i => i[0] === type)?.[1] || '🐾'
 
 export default function HomeDecoration() {
@@ -44,17 +44,17 @@ export default function HomeDecoration() {
       if (!user) return
       setUserId(user.id)
       const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation').order('created_at')
-      if (data) setItems(data.map(d => ({ ...d, x:Number(d.x), y:Number(d.y), rotation:Number(d.rotation) })))
+      if (data) setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({ ...d, x:Number(d.x), y:Number(d.y), rotation:Number(d.rotation) })))
     }
     load()
 
     const style = document.createElement('style')
     style.id = 'mawe-stock-spacing-fix'
     style.textContent = `
-      .mawe-header-stock{right:190px!important;left:auto!important;transform:none!important;width:330px!important;bottom:12px!important;}
-      .mawe-header-quote{width:min(360px,calc(100% - 390px))!important;max-width:360px!important;margin-right:auto!important;}
-      @media(max-width:1100px){.mawe-header-stock{right:12px!important;width:min(330px,calc(100% - 28px))!important}.mawe-header-quote{width:min(360px,calc(100% - 28px))!important;max-width:none!important}}
-      @media(max-width:767px){.mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}.mawe-header-quote{width:100%!important}}
+      .mawe-header-stock{right:175px!important;left:auto!important;transform:none!important;width:330px!important;bottom:12px!important;}
+      .mawe-header-quote{width:330px!important;max-width:330px!important;margin-right:auto!important;}
+      @media(max-width:1100px){.mawe-header-stock{right:12px!important;width:min(330px,calc(100% - 28px))!important}.mawe-header-quote{width:min(330px,calc(100% - 370px))!important;max-width:none!important}}
+      @media(max-width:767px){.mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}.mawe-header-quote{width:100%!important;max-width:none!important}}
     `
     document.head.appendChild(style)
     return () => {
