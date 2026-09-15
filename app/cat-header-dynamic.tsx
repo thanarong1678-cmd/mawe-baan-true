@@ -213,10 +213,12 @@ export default function CatHeaderDynamic() {
     const saveStock = async (nextBags:number, nextBoxes:number) => {
       if (!user) return
       if (litterId) {
-        await supabase.from('cat_litter').update({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes) }).eq('id',litterId).eq('user_id',user.id)
+        const { error } = await supabase.from('cat_litter').update({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes) }).eq('id',litterId).eq('user_id',user.id)
+        if (error) throw error
       } else {
         const today = new Date().toISOString().slice(0,10)
-        const { data } = await supabase.from('cat_litter').insert({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes), last_changed:today, user_id:user.id }).select('id').maybeSingle()
+        const { data, error } = await supabase.from('cat_litter').insert({ bags_left:Math.max(0,nextBags), box_count:Math.max(0,nextBoxes), last_changed:today, user_id:user.id }).select('id').maybeSingle()
+        if (error) throw error
         if (data) { litterId=data.id; lastChanged=today }
       }
     }
@@ -224,12 +226,12 @@ export default function CatHeaderDynamic() {
     stockWrap.innerHTML = `
       <div class="mawe-stock-card">
         <div class="mawe-stock-icon">🛍️</div>
-        <div><div class="mawe-stock-label">ทรายแมว</div><div class="mawe-stock-value"><strong>${bags}</strong> ถุง</div><div class="mawe-stock-owner">🐱 ของ${catName}</div></div>
+        <div><div class="mawe-stock-label">ทรายแมว</div><div class="mawe-stock-value"><strong data-stock-value="bags">${bags}</strong> ถุง</div><div class="mawe-stock-owner">🐱 ของ${catName}</div></div>
         <div class="mawe-stock-controls"><button data-stock="bm">−</button><button data-stock="bp">+</button></div>
       </div>
       <div class="mawe-stock-card">
         <div class="mawe-stock-icon">🧺</div>
-        <div><div class="mawe-stock-label">กระบะทราย</div><div class="mawe-stock-value"><strong>${boxes}</strong>/3</div><div class="mawe-stock-owner">🐱 ของ${catName}</div></div>
+        <div><div class="mawe-stock-label">กระบะทราย</div><div class="mawe-stock-value"><strong data-stock-value="boxes">${boxes}</strong>/3</div><div class="mawe-stock-owner">🐱 ของ${catName}</div></div>
         <div class="mawe-stock-controls"><button data-stock="xm">−</button><button data-stock="xp">+</button></div>
       </div>
       <div class="mawe-stock-card mawe-stock-date-card">
@@ -239,11 +241,41 @@ export default function CatHeaderDynamic() {
       </div>
     `
 
-    const bindStock = (sel:string, fn:()=>Promise<void>) => stockWrap!.querySelector(sel)?.addEventListener('click', () => { void fn() })
-    bindStock('[data-stock="bm"]', async()=>{ bags=Math.max(0,bags-1); await saveStock(bags,boxes); const el=stockWrap!.querySelector('[data-stock-value="bags"]'); if(el) el.textContent=String(bags) })
-    bindStock('[data-stock="bp"]', async()=>{ bags++; await saveStock(bags,boxes); const el=stockWrap!.querySelector('[data-stock-value="bags"]'); if(el) el.textContent=String(bags) })
-    bindStock('[data-stock="xm"]', async()=>{ boxes=Math.max(0,boxes-1); await saveStock(bags,boxes); const el=stockWrap!.querySelector('[data-stock-value="boxes"]'); if(el) el.textContent=String(boxes) })
-    bindStock('[data-stock="xp"]', async()=>{ boxes++; await saveStock(bags,boxes); const el=stockWrap!.querySelector('[data-stock-value="boxes"]'); if(el) el.textContent=String(boxes) })
+    const updateStockValue = (key:'bags'|'boxes', value:number) => {
+      const el = stockWrap!.querySelector(`[data-stock-value="${key}"]`) as HTMLElement | null
+      if (el) el.textContent = String(value)
+    }
+
+    const bindStock = (sel:string, fn:()=>Promise<void>) => stockWrap!.querySelector(sel)?.addEventListener('click', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      void fn().catch((error) => console.error('Update litter stock error:', error))
+    })
+
+    bindStock('[data-stock="bm"]', async()=>{
+      const next = Math.max(0,bags-1)
+      bags = next
+      updateStockValue('bags', bags)
+      await saveStock(bags,boxes)
+    })
+    bindStock('[data-stock="bp"]', async()=>{
+      const next = bags + 1
+      bags = next
+      updateStockValue('bags', bags)
+      await saveStock(bags,boxes)
+    })
+    bindStock('[data-stock="xm"]', async()=>{
+      const next = Math.max(0,boxes-1)
+      boxes = next
+      updateStockValue('boxes', boxes)
+      await saveStock(bags,boxes)
+    })
+    bindStock('[data-stock="xp"]', async()=>{
+      const next = boxes + 1
+      boxes = next
+      updateStockValue('boxes', boxes)
+      await saveStock(bags,boxes)
+    })
 
     const changeDateBtn = stockWrap.querySelector('[data-litter-change]') as HTMLButtonElement | null
     const dateEl = stockWrap.querySelector('.mawe-litter-date') as HTMLElement | null
