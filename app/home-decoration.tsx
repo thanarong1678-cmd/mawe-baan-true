@@ -29,6 +29,7 @@ export default function HomeDecoration() {
   const [mounted, setMounted] = useState(false)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressed = useRef(false)
+  const dragRef = useRef<string | null>(null)
   const trashRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -43,11 +44,7 @@ export default function HomeDecoration() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase
-        .from('home_decorations')
-        .select('id,item_type,x,y,rotation')
-        .eq('user_id', user.id)
-        .order('created_at')
+      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation').eq('user_id', user.id).order('created_at')
       if (data) setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({ ...d, x:Number(d.x), y:Number(d.y), rotation:Number(d.rotation) })))
     }
     load()
@@ -97,23 +94,9 @@ export default function HomeDecoration() {
       uid = user?.id || null
       if (uid) setUserId(uid)
     }
-    if (!uid) {
-      alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว')
-      return
-    }
-
-    const { data, error } = await supabase
-      .from('home_decorations')
-      .insert({ user_id:uid, item_type:type, x:50, y:58, rotation:0 })
-      .select('id,item_type,x,y,rotation')
-      .single()
-
-    if (error) {
-      console.error('Add decoration error:', error)
-      alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message)
-      return
-    }
-
+    if (!uid) { alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว'); return }
+    const { data, error } = await supabase.from('home_decorations').insert({ user_id:uid, item_type:type, x:50, y:58, rotation:0 }).select('id,item_type,x,y,rotation').single()
+    if (error) { console.error('Add decoration error:', error); alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message); return }
     if (data) setItems(v => [...v, { ...data, x:Number(data.x), y:Number(data.y), rotation:Number(data.rotation) }])
   }
 
@@ -137,16 +120,24 @@ export default function HomeDecoration() {
       const item = items.find(i => i.id===id)
       if (item) await supabase.from('home_decorations').update({x:item.x,y:item.y}).eq('id',id).eq('user_id', userId)
     }
-    setDrag(null); setTrashHover(false)
+    dragRef.current=null; setDrag(null); setTrashHover(false)
   }
 
   const startPress = (id:string, e:PointEvent) => {
     e.preventDefault()
     longPressed.current = false
+    dragRef.current = null
     const target = e.currentTarget as HTMLElement
-    target.setPointerCapture(e.pointerId)
+    try { target.setPointerCapture(e.pointerId) } catch {}
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      longPressed.current = true
+      dragRef.current = id
+      setDrag(id)
+      return
+    }
     pressTimer.current = setTimeout(() => {
       longPressed.current = true
+      dragRef.current = id
       setDrag(id)
     }, 500)
   }
@@ -157,14 +148,14 @@ export default function HomeDecoration() {
   }
 
   const handleMove = (id:string, e:PointEvent) => {
-    if (!longPressed.current || drag!==id) return
+    if (!longPressed.current || dragRef.current!==id) return
     moveItem(id,e)
   }
 
   const handleUp = (id:string, e:PointEvent) => {
     cancelPress()
-    if (longPressed.current && drag===id) finishMove(id,e)
-    else setDrag(null)
+    if (longPressed.current && dragRef.current===id) void finishMove(id,e)
+    else { dragRef.current=null; setDrag(null) }
     longPressed.current = false
   }
 
@@ -174,7 +165,7 @@ export default function HomeDecoration() {
       <div className="home-decoration-items">
         {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => addItem(type)}>{emoji}<span>{label}</span></button>)}
       </div>
-      <small>แตะเพื่อเพิ่มของตกแต่ง • กดค้าง 0.5 วินาทีที่ของตกแต่งเพื่อย้าย</small>
+      <small>แตะเพื่อเพิ่มของตกแต่ง • มือถือ: แตะแล้วลากเพื่อย้าย • คอม: กดค้าง 0.5 วินาทีเพื่อย้าย</small>
     </div>
   ) : null
 
@@ -182,7 +173,7 @@ export default function HomeDecoration() {
     <div className="home-decoration-layer">
       {items.map(item => (
         <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
-          <div className={`home-decoration-object ${drag===item.id ? 'is-dragging' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`}} onPointerDown={e => startPress(item.id,e)} onPointerMove={e => handleMove(item.id,e)} onPointerUp={e => handleUp(item.id,e)} onPointerCancel={cancelPress}>{icon(item.item_type)}</div>
+          <div key={item.id} className={`home-decoration-object ${drag===item.id ? 'is-dragging' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`}} onPointerDown={e => startPress(item.id,e)} onPointerMove={e => handleMove(item.id,e)} onPointerUp={e => handleUp(item.id,e)} onPointerCancel={cancelPress}>{icon(item.item_type)}</div>
         </div>
       ))}
       {drag && <div ref={trashRef} className={`home-decoration-trash ${trashHover ? 'is-over' : ''}`} aria-label="ถังขยะลบของตกแต่ง">🗑️<span>{trashHover ? 'ปล่อยเพื่อลบ' : 'ลากมาทิ้งที่นี่'}</span></div>}
