@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import './home-decoration.css'
 
 type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number; color: string }
-type DragState = { id: string; originalX: number; originalY: number; moved: boolean }
+type DragState = { id: string; originalX: number; originalY: number; currentX: number; currentY: number; moved: boolean }
 type PendingDrag = { id: string; x: number; y: number; originalX: number; originalY: number }
 
 const ITEMS = [
@@ -67,11 +67,7 @@ export default function HomeDecoration() {
 
   useEffect(() => {
     setMounted(true)
-
-    const updateRoom = () => {
-      const el = findVisibleRoom()
-      if (el) setRoom(el)
-    }
+    const updateRoom = () => { const el = findVisibleRoom(); if (el) setRoom(el) }
     updateRoom()
     const retryTimers = [100, 300, 700, 1200].map(ms => window.setTimeout(updateRoom, ms))
     const observer = new MutationObserver(updateRoom)
@@ -82,27 +78,16 @@ export default function HomeDecoration() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase
-        .from('home_decorations')
-        .select('id,item_type,x,y,rotation,color')
-        .eq('user_id', user.id)
-        .order('created_at')
+      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation,color').eq('user_id', user.id).order('created_at')
       if (data) {
         const seen = new Set<string>()
         const uniqueItems = data.filter(d => {
           if (!ITEM_TYPES.has(d.item_type) || seen.has(d.item_type)) return false
-          seen.add(d.item_type)
-          return true
+          seen.add(d.item_type); return true
         })
         setItems(uniqueItems.map(d => {
           const fallback = fixedPosition(d.item_type)
-          return {
-            ...d,
-            color: d.color || 'default',
-            x: Number.isFinite(Number(d.x)) ? Number(d.x) : fallback.x,
-            y: Number.isFinite(Number(d.y)) ? Number(d.y) : fallback.y,
-            rotation: Number.isFinite(Number(d.rotation)) ? Number(d.rotation) : fallback.rotation,
-          }
+          return { ...d, color:d.color || 'default', x:Number.isFinite(Number(d.x)) ? Number(d.x) : fallback.x, y:Number.isFinite(Number(d.y)) ? Number(d.y) : fallback.y, rotation:Number.isFinite(Number(d.rotation)) ? Number(d.rotation) : fallback.rotation }
         }))
       }
     }
@@ -115,72 +100,31 @@ export default function HomeDecoration() {
         header{padding-bottom:88px!important;min-height:0!important;}
         header>div:first-child>div:first-child{width:84px!important;height:84px!important;min-width:84px!important;min-height:84px!important;flex-basis:84px!important;font-size:42px!important;}
         .mawe-cat-face{width:44px!important;height:44px!important;font-size:44px!important;flex-basis:44px!important;}
-        header h1{font-size:34px!important;}
-        header h1+button{font-size:13px!important;padding:7px 13px!important;}
+        header h1{font-size:34px!important;} header h1+button{font-size:13px!important;padding:7px 13px!important;}
         .mawe-header-quote{width:290px!important;max-width:290px!important;padding:8px 12px!important;margin-bottom:8px!important;font-size:12px!important;}
         .mawe-header-quote .mawe-arrow{font-size:24px!important;}
         .mawe-header-stock{right:150px!important;left:auto!important;transform:none!important;width:450px!important;bottom:8px!important;gap:8px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
         .mawe-stock-card{min-height:66px!important;padding:7px 9px!important;border-radius:14px!important;grid-template-columns:31px minmax(0,1fr)!important;gap:2px 6px!important;}
-        .mawe-stock-icon{width:31px!important;height:31px!important;font-size:20px!important;}
-        .mawe-stock-label{font-size:11px!important;}
-        .mawe-stock-value{font-size:10px!important;}
-        .mawe-stock-value strong{font-size:20px!important;}
-        .mawe-stock-controls button{width:24px!important;height:21px!important;}
-        .mawe-header-sleepy{right:10px!important;bottom:8px!important;font-size:40px!important;}
+        .mawe-stock-icon{width:31px!important;height:31px!important;font-size:20px!important;} .mawe-stock-label{font-size:11px!important;} .mawe-stock-value{font-size:10px!important;} .mawe-stock-value strong{font-size:20px!important;}
+        .mawe-stock-controls button{width:24px!important;height:21px!important;} .mawe-header-sleepy{right:10px!important;bottom:8px!important;font-size:40px!important;}
       }
-      @media(max-width:1100px) and (min-width:768px){
-        header{padding-bottom:84px!important;}
-        .mawe-header-stock{right:12px!important;width:min(450px,calc(100% - 28px))!important;}
-        .mawe-header-quote{width:min(290px,calc(100% - 350px))!important;max-width:none!important;}
-      }
-      @media(max-width:767px){
-        .mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
-        .mawe-header-quote{width:100%!important;max-width:none!important}
-      }
+      @media(max-width:1100px) and (min-width:768px){header{padding-bottom:84px!important;}.mawe-header-stock{right:12px!important;width:min(450px,calc(100% - 28px))!important;}.mawe-header-quote{width:min(290px,calc(100% - 350px))!important;max-width:none!important;}}
+      @media(max-width:767px){.mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}.mawe-header-quote{width:100%!important;max-width:none!important}}
     `
     document.head.appendChild(style)
-    return () => {
-      retryTimers.forEach(window.clearTimeout)
-      observer.disconnect()
-      window.removeEventListener('resize', updateRoom)
-      document.getElementById('mawe-stock-spacing-fix')?.remove()
-    }
+    return () => { retryTimers.forEach(window.clearTimeout); observer.disconnect(); window.removeEventListener('resize', updateRoom); document.getElementById('mawe-stock-spacing-fix')?.remove() }
   }, [])
 
   const addItem = async (type: string) => {
     let uid = userId
-    if (!uid) {
-      const { data: { user } } = await supabase.auth.getUser()
-      uid = user?.id || null
-      if (uid) setUserId(uid)
-    }
+    if (!uid) { const { data:{user} } = await supabase.auth.getUser(); uid=user?.id || null; if (uid) setUserId(uid) }
     if (!uid) { alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว'); return }
-
     const existing = items.find(i => i.item_type === type)
-    if (existing) {
-      setSelectedId(existing.id)
-      alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว สามารถกดที่ชิ้นนั้นเพื่อเปลี่ยนสีหรือลบได้')
-      return
-    }
-
+    if (existing) { setSelectedId(existing.id); alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว สามารถกดที่ชิ้นนั้นเพื่อเปลี่ยนสีหรือลบได้'); return }
     const pos = fixedPosition(type)
-    const { data, error } = await supabase
-      .from('home_decorations')
-      .insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default' })
-      .select('id,item_type,x,y,rotation,color')
-      .single()
-    if (error) {
-      console.error('Add decoration error:', error)
-      if (error.code === '23505') alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว')
-      else alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message)
-      return
-    }
-    if (data) {
-      const newItem = { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }
-      setItems(v => [...v, newItem])
-      setSelectedId(data.id)
-      setOpen(false)
-    }
+    const { data, error } = await supabase.from('home_decorations').insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default' }).select('id,item_type,x,y,rotation,color').single()
+    if (error) { console.error('Add decoration error:', error); if (error.code === '23505') alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว'); else alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message); return }
+    if (data) { setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }]); setSelectedId(data.id); setOpen(false) }
   }
 
   const changeColor = async (id:string, color:string) => {
@@ -192,33 +136,15 @@ export default function HomeDecoration() {
 
   const deleteItem = async (id:string) => {
     if (!userId) return
-    const { error } = await supabase
-      .from('home_decorations')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId)
-    if (error) {
-      console.error('Delete decoration error:', error)
-      alert('ลบของตกแต่งไม่สำเร็จ: ' + error.message)
-      return
-    }
-    setItems(v => v.filter(i => i.id !== id))
-    setSelectedId(null)
-    setPendingDrag(null)
+    const { error } = await supabase.from('home_decorations').delete().eq('id',id).eq('user_id',userId)
+    if (error) { console.error('Delete decoration error:', error); alert('ลบของตกแต่งไม่สำเร็จ: ' + error.message); return }
+    setItems(v => v.filter(i => i.id !== id)); setSelectedId(null); setPendingDrag(null)
   }
 
   const savePosition = async (id:string, x:number, y:number) => {
     if (!userId) return false
-    const { error } = await supabase
-      .from('home_decorations')
-      .update({ x, y })
-      .eq('id', id)
-      .eq('user_id', userId)
-    if (error) {
-      console.error('Save decoration position error:', error)
-      alert('บันทึกตำแหน่งไม่สำเร็จ กรุณาลองใหม่')
-      return false
-    }
+    const { error } = await supabase.from('home_decorations').update({ x, y }).eq('id',id).eq('user_id',userId)
+    if (error) { console.error('Save decoration position error:', error); alert('บันทึกตำแหน่งไม่สำเร็จ กรุณาลองใหม่'); return false }
     return true
   }
 
@@ -231,15 +157,13 @@ export default function HomeDecoration() {
   const confirmDrag = async () => {
     if (!pendingDrag) return
     const current = pendingDrag
-    const ok = await savePosition(current.id, current.x, current.y)
-    if (ok) setPendingDrag(null)
+    if (await savePosition(current.id, current.x, current.y)) setPendingDrag(null)
   }
 
   const startDrag = (e: React.PointerEvent<HTMLButtonElement>, item: Decoration) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
-    e.preventDefault()
-    e.stopPropagation()
-    dragRef.current = { id:item.id, originalX:item.x, originalY:item.y, moved:false }
+    e.preventDefault(); e.stopPropagation()
+    dragRef.current = { id:item.id, originalX:item.x, originalY:item.y, currentX:item.x, currentY:item.y, moved:false }
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
 
@@ -250,67 +174,36 @@ export default function HomeDecoration() {
     if (rect.width <= 0 || rect.height <= 0) return
     const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100))
     const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100))
-    if (Math.abs(x - drag.originalX) > 1 || Math.abs(y - drag.originalY) > 1) drag.moved = true
-    if (drag.moved) {
-      setItems(v => v.map(i => i.id===drag.id ? { ...i, x, y } : i))
-    }
+    if (Math.abs(x-drag.originalX)>1 || Math.abs(y-drag.originalY)>1) drag.moved=true
+    if (drag.moved) { drag.currentX=x; drag.currentY=y; setItems(v => v.map(i => i.id===drag.id ? { ...i, x, y } : i)) }
   }
 
   const endDrag = (e: React.PointerEvent<HTMLButtonElement>, item: Decoration) => {
     const drag = dragRef.current
     if (!drag || drag.id !== item.id) return
-    dragRef.current = null
+    dragRef.current=null
     try { e.currentTarget.releasePointerCapture?.(e.pointerId) } catch {}
-    if (!drag.moved) {
-      setSelectedId(selectedId===item.id ? null : item.id)
-      return
-    }
-    const latest = items.find(i => i.id === item.id)
-    if (!latest) return
+    if (!drag.moved) { setSelectedId(selectedId===item.id ? null : item.id); return }
     setSelectedId(item.id)
-    setPendingDrag({ id:item.id, x:latest.x, y:latest.y, originalX:drag.originalX, originalY:drag.originalY })
+    setPendingDrag({ id:item.id, x:drag.currentX, y:drag.currentY, originalX:drag.originalX, originalY:drag.originalY })
   }
 
   const layer = mounted && room ? createPortal(
     <div className="home-decoration-layer">
       {items.map(item => (
         <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
-          <button
-            type="button"
-            className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`}
-            style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`,filter:colorFilter(item.color)}}
-            onPointerDown={(e) => startDrag(e,item)}
-            onPointerMove={moveDrag}
-            onPointerUp={(e) => endDrag(e,item)}
-            onPointerCancel={(e) => endDrag(e,item)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} ลากเพื่อย้ายตำแหน่ง`}
-          >
+          <button type="button" className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`,filter:colorFilter(item.color)}} onPointerDown={(e)=>startDrag(e,item)} onPointerMove={moveDrag} onPointerUp={(e)=>endDrag(e,item)} onPointerCancel={(e)=>endDrag(e,item)} onClick={(e)=>e.stopPropagation()} aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} ลากเพื่อย้ายตำแหน่ง`}>
             {icon(item.item_type)}
           </button>
           {selectedId===item.id && (
-            <div className="home-decoration-color-picker" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <div className="home-decoration-color-picker" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
               <div className="home-decoration-color-title">ลากเพื่อย้ายตำแหน่ง</div>
-              {pendingDrag?.id===item.id && (
-                <div className="home-decoration-confirm-row">
-                  <button type="button" className="home-decoration-confirm" onClick={() => void confirmDrag()}>✓ ยืนยันตำแหน่งนี้</button>
-                  <button type="button" className="home-decoration-cancel" onClick={cancelDrag}>ยกเลิก</button>
-                </div>
-              )}
+              {pendingDrag?.id===item.id && <div className="home-decoration-confirm-row"><button type="button" className="home-decoration-confirm" onClick={()=>void confirmDrag()}>✓ ยืนยันตำแหน่งนี้</button><button type="button" className="home-decoration-cancel" onClick={cancelDrag}>ยกเลิก</button></div>}
               <div className="home-decoration-color-title">เลือกสี</div>
               <div className="home-decoration-colors">
-                {COLORS.map(([value,label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`home-decoration-color-dot color-${value} ${item.color===value ? 'active' : ''}`}
-                    title={label}
-                    aria-label={label}
-                    onClick={() => void changeColor(item.id,value)}
-                  />
-                ))}
+                {COLORS.map(([value,label])=><button key={value} type="button" className={`home-decoration-color-dot color-${value} ${item.color===value?'active':''}`} title={label} aria-label={label} onClick={()=>void changeColor(item.id,value)}/>) }
               </div>
-              <button type="button" className="home-decoration-delete" onClick={() => void deleteItem(item.id)}>🗑️ ลบของตกแต่งชิ้นนี้</button>
+              <button type="button" className="home-decoration-delete" onClick={()=>void deleteItem(item.id)}>🗑️ ลบของตกแต่งชิ้นนี้</button>
             </div>
           )}
         </div>
@@ -319,16 +212,8 @@ export default function HomeDecoration() {
   ) : null
 
   return <>
-    <button className="home-decorate-toggle" type="button" onClick={() => setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
-    {open && (
-      <div className="home-decoration-panel">
-        <strong>🐱 ของตกแต่งน้องแมว</strong>
-        <div className="home-decoration-items">
-          {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => void addItem(type)}>{emoji}<span>{label}</span></button>)}
-        </div>
-        <small>ลากของตกแต่งได้ทั้งคอมและโทรศัพท์ • ปล่อยแล้วกดยืนยันตำแหน่ง • แตะเพื่อเปลี่ยนสีหรือลบ</small>
-      </div>
-    )}
+    <button className="home-decorate-toggle" type="button" onClick={()=>setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
+    {open && <div className="home-decoration-panel"><strong>🐱 ของตกแต่งน้องแมว</strong><div className="home-decoration-items">{ITEMS.map(([type,emoji,label])=><button key={type} type="button" onClick={()=>void addItem(type)}>{emoji}<span>{label}</span></button>)}</div><small>ลากของตกแต่งได้ทั้งคอมและโทรศัพท์ • ปล่อยแล้วกดยืนยันตำแหน่ง • แตะเพื่อเปลี่ยนสีหรือลบ</small></div>}
     {layer}
   </>
 }
