@@ -1,12 +1,11 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import './home-decoration.css'
 
-type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number }
-type PointEvent = React.PointerEvent<HTMLDivElement>
+type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number; color: string }
 
 const ITEMS = [
   ['catbed','🛏️','ที่นอนแมว'],
@@ -19,18 +18,38 @@ const ITEMS = [
 const ITEM_TYPES = new Set(ITEMS.map(i => i[0]))
 const icon = (type: string) => ITEMS.find(i => i[0] === type)?.[1] || '🐾'
 
+const FIXED_POSITIONS: Record<string, { x:number; y:number; rotation:number }> = {
+  catbed: { x:18, y:70, rotation:0 },
+  scratch: { x:38, y:64, rotation:-3 },
+  feather: { x:55, y:72, rotation:8 },
+  ball: { x:69, y:73, rotation:0 },
+  bowl: { x:82, y:68, rotation:-4 },
+  catbox: { x:30, y:34, rotation:0 },
+}
+
+const COLORS = [
+  ['default','สีเดิม','none'],
+  ['red','แดง','sepia(.25) saturate(3) hue-rotate(-25deg)'],
+  ['orange','ส้ม','sepia(.35) saturate(2.5) hue-rotate(-5deg)'],
+  ['yellow','เหลือง','sepia(.45) saturate(2.8) hue-rotate(5deg) brightness(1.08)'],
+  ['green','เขียว','sepia(.45) saturate(3) hue-rotate(65deg)'],
+  ['blue','ฟ้า','sepia(.3) saturate(3) hue-rotate(155deg)'],
+  ['purple','ม่วง','sepia(.45) saturate(3) hue-rotate(245deg)'],
+  ['pink','ชมพู','sepia(.35) saturate(3) hue-rotate(300deg)'],
+  ['brown','น้ำตาล','sepia(.8) saturate(1.8) brightness(.8)'],
+  ['black','ดำ','grayscale(1) brightness(.45)'],
+  ['white','ขาว','grayscale(1) brightness(1.55)'],
+]
+const colorFilter = (color:string) => COLORS.find(c => c[0]===color)?.[2] || 'none'
+const fixedPosition = (type:string) => FIXED_POSITIONS[type] || { x:50, y:58, rotation:0 }
+
 export default function HomeDecoration() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Decoration[]>([])
   const [userId, setUserId] = useState<string | null>(null)
-  const [drag, setDrag] = useState<string | null>(null)
-  const [trashHover, setTrashHover] = useState(false)
   const [room, setRoom] = useState<HTMLElement | null>(null)
   const [mounted, setMounted] = useState(false)
-  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const longPressed = useRef(false)
-  const dragRef = useRef<string | null>(null)
-  const trashRef = useRef<HTMLDivElement>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -44,10 +63,23 @@ export default function HomeDecoration() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation').eq('user_id', user.id).order('created_at')
-      if (data) setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({ ...d, x:Number(d.x), y:Number(d.y), rotation:Number(d.rotation) })))
+      const { data } = await supabase
+        .from('home_decorations')
+        .select('id,item_type,x,y,rotation,color')
+        .eq('user_id', user.id)
+        .order('created_at')
+      if (data) {
+        setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({
+          ...d,
+          ...fixedPosition(d.item_type),
+          color: d.color || 'default',
+          x:Number(fixedPosition(d.item_type).x),
+          y:Number(fixedPosition(d.item_type).y),
+          rotation:Number(fixedPosition(d.item_type).rotation),
+        })))
+      }
     }
-    load()
+    void load()
 
     const style = document.createElement('style')
     style.id = 'mawe-stock-spacing-fix'
@@ -80,11 +112,7 @@ export default function HomeDecoration() {
       }
     `
     document.head.appendChild(style)
-
-    return () => {
-      if (pressTimer.current) clearTimeout(pressTimer.current)
-      document.getElementById('mawe-stock-spacing-fix')?.remove()
-    }
+    return () => document.getElementById('mawe-stock-spacing-fix')?.remove()
   }, [])
 
   const addItem = async (type: string) => {
@@ -95,94 +123,75 @@ export default function HomeDecoration() {
       if (uid) setUserId(uid)
     }
     if (!uid) { alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว'); return }
-    const { data, error } = await supabase.from('home_decorations').insert({ user_id:uid, item_type:type, x:50, y:58, rotation:0 }).select('id,item_type,x,y,rotation').single()
+    const pos = fixedPosition(type)
+    const { data, error } = await supabase
+      .from('home_decorations')
+      .insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default' })
+      .select('id,item_type,x,y,rotation,color')
+      .single()
     if (error) { console.error('Add decoration error:', error); alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message); return }
-    if (data) setItems(v => [...v, { ...data, x:Number(data.x), y:Number(data.y), rotation:Number(data.rotation) }])
-  }
-
-  const moveItem = (id: string, e: PointEvent) => {
-    if (!room) return
-    const r = room.getBoundingClientRect()
-    const x = Math.max(5, Math.min(95, ((e.clientX-r.left)/r.width)*100))
-    const y = Math.max(8, Math.min(92, ((e.clientY-r.top)/r.height)*100))
-    setItems(v => v.map(i => i.id===id ? { ...i, x, y } : i))
-    const trash = trashRef.current?.getBoundingClientRect()
-    setTrashHover(!!trash && e.clientX>=trash.left && e.clientX<=trash.right && e.clientY>=trash.top && e.clientY<=trash.bottom)
-  }
-
-  const finishMove = async (id: string, e: PointEvent) => {
-    const trash = trashRef.current?.getBoundingClientRect()
-    const overTrash = !!trash && e.clientX>=trash.left && e.clientX<=trash.right && e.clientY>=trash.top && e.clientY<=trash.bottom
-    if (overTrash) {
-      const { error } = await supabase.from('home_decorations').delete().eq('id',id).eq('user_id', userId)
-      if (!error) setItems(v => v.filter(i => i.id!==id))
-    } else {
-      const item = items.find(i => i.id===id)
-      if (item) await supabase.from('home_decorations').update({x:item.x,y:item.y}).eq('id',id).eq('user_id', userId)
+    if (data) {
+      setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }])
+      setSelectedId(data.id)
     }
-    dragRef.current=null; setDrag(null); setTrashHover(false)
   }
 
-  const startPress = (id:string, e:PointEvent) => {
-    e.preventDefault()
-    longPressed.current = false
-    dragRef.current = null
-    const target = e.currentTarget as HTMLElement
-    try { target.setPointerCapture(e.pointerId) } catch {}
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-      longPressed.current = true
-      dragRef.current = id
-      setDrag(id)
-      return
-    }
-    pressTimer.current = setTimeout(() => {
-      longPressed.current = true
-      dragRef.current = id
-      setDrag(id)
-    }, 500)
+  const changeColor = async (id:string, color:string) => {
+    if (!userId) return
+    const { error } = await supabase.from('home_decorations').update({ color }).eq('id',id).eq('user_id',userId)
+    if (error) { console.error('Change decoration color error:', error); return }
+    setItems(v => v.map(i => i.id===id ? { ...i, color } : i))
   }
-
-  const cancelPress = () => {
-    if (pressTimer.current) clearTimeout(pressTimer.current)
-    pressTimer.current = null
-  }
-
-  const handleMove = (id:string, e:PointEvent) => {
-    if (!longPressed.current || dragRef.current!==id) return
-    moveItem(id,e)
-  }
-
-  const handleUp = (id:string, e:PointEvent) => {
-    cancelPress()
-    if (longPressed.current && dragRef.current===id) void finishMove(id,e)
-    else { dragRef.current=null; setDrag(null) }
-    longPressed.current = false
-  }
-
-  const panel = open ? (
-    <div className="home-decoration-panel">
-      <strong>🐱 ของตกแต่งน้องแมว</strong>
-      <div className="home-decoration-items">
-        {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => addItem(type)}>{emoji}<span>{label}</span></button>)}
-      </div>
-      <small>แตะเพื่อเพิ่มของตกแต่ง • มือถือ: แตะแล้วลากเพื่อย้าย • คอม: กดค้าง 0.5 วินาทีเพื่อย้าย</small>
-    </div>
-  ) : null
 
   const layer = mounted && room ? createPortal(
     <div className="home-decoration-layer">
-      {items.map(item => (
-        <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
-          <div key={item.id} className={`home-decoration-object ${drag===item.id ? 'is-dragging' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`}} onPointerDown={e => startPress(item.id,e)} onPointerMove={e => handleMove(item.id,e)} onPointerUp={e => handleUp(item.id,e)} onPointerCancel={cancelPress}>{icon(item.item_type)}</div>
-        </div>
-      ))}
-      {drag && <div ref={trashRef} className={`home-decoration-trash ${trashHover ? 'is-over' : ''}`} aria-label="ถังขยะลบของตกแต่ง">🗑️<span>{trashHover ? 'ปล่อยเพื่อลบ' : 'ลากมาทิ้งที่นี่'}</span></div>}
+      {items.map(item => {
+        const pos = fixedPosition(item.item_type)
+        return (
+          <div key={item.id} className="home-decoration-object-wrap" style={{left:`${pos.x}%`,top:`${pos.y}%`}}>
+            <button
+              type="button"
+              className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`}
+              style={{transform:`translate(-50%,-50%) rotate(${pos.rotation}deg)`,filter:colorFilter(item.color)}}
+              onClick={(e) => { e.stopPropagation(); setSelectedId(selectedId===item.id ? null : item.id) }}
+              aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} เลือกสี`}
+            >
+              {icon(item.item_type)}
+            </button>
+            {selectedId===item.id && (
+              <div className="home-decoration-color-picker" onClick={e => e.stopPropagation()}>
+                <div className="home-decoration-color-title">เลือกสี</div>
+                <div className="home-decoration-colors">
+                  {COLORS.map(([value,label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`home-decoration-color-dot color-${value} ${item.color===value ? 'active' : ''}`}
+                      title={label}
+                      aria-label={label}
+                      onClick={() => void changeColor(item.id,value)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>, room
   ) : null
 
   return <>
     <button className="home-decorate-toggle" type="button" onClick={() => setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
-    {panel}
+    {open && (
+      <div className="home-decoration-panel">
+        <strong>🐱 ของตกแต่งน้องแมว</strong>
+        <div className="home-decoration-items">
+          {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => void addItem(type)}>{emoji}<span>{label}</span></button>)}
+        </div>
+        <small>แตะของตกแต่งในบ้านเพื่อเลือกสี • ของตกแต่งจะอยู่ตำแหน่งประจำและไม่สามารถลากย้ายได้</small>
+      </div>
+    )}
     {layer}
   </>
 }
