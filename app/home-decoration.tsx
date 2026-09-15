@@ -55,10 +55,33 @@ export default function HomeDecoration() {
     const style = document.createElement('style')
     style.id = 'mawe-stock-spacing-fix'
     style.textContent = `
-      .mawe-header-stock{right:175px!important;left:auto!important;transform:none!important;width:310px!important;bottom:10px!important;}
-      .mawe-header-quote{width:310px!important;max-width:310px!important;margin-right:auto!important;}
-      @media(max-width:1100px){.mawe-header-stock{right:12px!important;width:min(310px,calc(100% - 28px))!important}.mawe-header-quote{width:min(310px,calc(100% - 370px))!important;max-width:none!important}}
-      @media(max-width:767px){.mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}.mawe-header-quote{width:100%!important;max-width:none!important}}
+      /* Desktop: ลดความสูงของแถบสีส้ม และกันพื้นที่สต็อกไม่ให้ทับข้อความ */
+      @media(min-width:768px){
+        header{padding-bottom:88px!important;min-height:0!important;}
+        header>div:first-child>div:first-child{width:84px!important;height:84px!important;min-width:84px!important;min-height:84px!important;flex-basis:84px!important;font-size:42px!important;}
+        .mawe-cat-face{width:44px!important;height:44px!important;font-size:44px!important;flex-basis:44px!important;}
+        header h1{font-size:34px!important;}
+        header h1+button{font-size:13px!important;padding:7px 13px!important;}
+        .mawe-header-quote{width:290px!important;max-width:290px!important;padding:8px 12px!important;margin-bottom:8px!important;font-size:12px!important;}
+        .mawe-header-quote .mawe-arrow{font-size:24px!important;}
+        .mawe-header-stock{right:150px!important;left:auto!important;transform:none!important;width:300px!important;bottom:8px!important;gap:8px!important;}
+        .mawe-stock-card{min-height:66px!important;padding:7px 9px!important;border-radius:14px!important;grid-template-columns:31px minmax(0,1fr)!important;gap:2px 6px!important;}
+        .mawe-stock-icon{width:31px!important;height:31px!important;font-size:20px!important;}
+        .mawe-stock-label{font-size:11px!important;}
+        .mawe-stock-value{font-size:10px!important;}
+        .mawe-stock-value strong{font-size:20px!important;}
+        .mawe-stock-controls button{width:24px!important;height:21px!important;}
+        .mawe-header-sleepy{right:10px!important;bottom:8px!important;font-size:40px!important;}
+      }
+      @media(max-width:1100px) and (min-width:768px){
+        header{padding-bottom:84px!important;}
+        .mawe-header-stock{right:12px!important;width:min(300px,calc(100% - 28px))!important;}
+        .mawe-header-quote{width:min(290px,calc(100% - 350px))!important;max-width:none!important;}
+      }
+      @media(max-width:767px){
+        .mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}
+        .mawe-header-quote{width:100%!important;max-width:none!important}
+      }
     `
     document.head.appendChild(style)
     return () => {
