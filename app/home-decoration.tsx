@@ -43,7 +43,11 @@ export default function HomeDecoration() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation').order('created_at')
+      const { data } = await supabase
+        .from('home_decorations')
+        .select('id,item_type,x,y,rotation')
+        .eq('user_id', user.id)
+        .order('created_at')
       if (data) setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({ ...d, x:Number(d.x), y:Number(d.y), rotation:Number(d.rotation) })))
     }
     load()
@@ -51,9 +55,9 @@ export default function HomeDecoration() {
     const style = document.createElement('style')
     style.id = 'mawe-stock-spacing-fix'
     style.textContent = `
-      .mawe-header-stock{right:175px!important;left:auto!important;transform:none!important;width:330px!important;bottom:12px!important;}
-      .mawe-header-quote{width:330px!important;max-width:330px!important;margin-right:auto!important;}
-      @media(max-width:1100px){.mawe-header-stock{right:12px!important;width:min(330px,calc(100% - 28px))!important}.mawe-header-quote{width:min(330px,calc(100% - 370px))!important;max-width:none!important}}
+      .mawe-header-stock{right:175px!important;left:auto!important;transform:none!important;width:310px!important;bottom:10px!important;}
+      .mawe-header-quote{width:310px!important;max-width:310px!important;margin-right:auto!important;}
+      @media(max-width:1100px){.mawe-header-stock{right:12px!important;width:min(310px,calc(100% - 28px))!important}.mawe-header-quote{width:min(310px,calc(100% - 370px))!important;max-width:none!important}}
       @media(max-width:767px){.mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}.mawe-header-quote{width:100%!important;max-width:none!important}}
     `
     document.head.appendChild(style)
@@ -64,9 +68,30 @@ export default function HomeDecoration() {
   }, [])
 
   const addItem = async (type: string) => {
-    if (!userId) return
-    const { data, error } = await supabase.from('home_decorations').insert({ user_id:userId, item_type:type, x:50, y:58, rotation:0 }).select('id,item_type,x,y,rotation').single()
-    if (!error && data) setItems(v => [...v, { ...data, x:Number(data.x), y:Number(data.y), rotation:Number(data.rotation) }])
+    let uid = userId
+    if (!uid) {
+      const { data: { user } } = await supabase.auth.getUser()
+      uid = user?.id || null
+      if (uid) setUserId(uid)
+    }
+    if (!uid) {
+      alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว')
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('home_decorations')
+      .insert({ user_id:uid, item_type:type, x:50, y:58, rotation:0 })
+      .select('id,item_type,x,y,rotation')
+      .single()
+
+    if (error) {
+      console.error('Add decoration error:', error)
+      alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message)
+      return
+    }
+
+    if (data) setItems(v => [...v, { ...data, x:Number(data.x), y:Number(data.y), rotation:Number(data.rotation) }])
   }
 
   const moveItem = (id: string, e: PointEvent) => {
@@ -83,11 +108,11 @@ export default function HomeDecoration() {
     const trash = trashRef.current?.getBoundingClientRect()
     const overTrash = !!trash && e.clientX>=trash.left && e.clientX<=trash.right && e.clientY>=trash.top && e.clientY<=trash.bottom
     if (overTrash) {
-      const { error } = await supabase.from('home_decorations').delete().eq('id',id)
+      const { error } = await supabase.from('home_decorations').delete().eq('id',id).eq('user_id', userId)
       if (!error) setItems(v => v.filter(i => i.id!==id))
     } else {
       const item = items.find(i => i.id===id)
-      if (item) await supabase.from('home_decorations').update({x:item.x,y:item.y}).eq('id',id)
+      if (item) await supabase.from('home_decorations').update({x:item.x,y:item.y}).eq('id',id).eq('user_id', userId)
     }
     setDrag(null); setTrashHover(false)
   }
@@ -124,7 +149,7 @@ export default function HomeDecoration() {
     <div className="home-decoration-panel">
       <strong>🐱 ของตกแต่งน้องแมว</strong>
       <div className="home-decoration-items">
-        {ITEMS.map(([type, emoji, label]) => <button key={type} onClick={() => addItem(type)}>{emoji}<span>{label}</span></button>)}
+        {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => addItem(type)}>{emoji}<span>{label}</span></button>)}
       </div>
       <small>แตะเพื่อเพิ่มของตกแต่ง • กดค้าง 0.5 วินาทีที่ของตกแต่งเพื่อย้าย</small>
     </div>
@@ -142,7 +167,7 @@ export default function HomeDecoration() {
   ) : null
 
   return <>
-    <button className="home-decorate-toggle" onClick={() => setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
+    <button className="home-decorate-toggle" type="button" onClick={() => setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
     {panel}
     {layer}
   </>
