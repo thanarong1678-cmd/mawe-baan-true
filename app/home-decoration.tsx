@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import './home-decoration.css'
 
-type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number; color: string }
+type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number; color: string; scale: number }
 type DragState = { id: string; originalX: number; originalY: number; currentX: number; currentY: number; moved: boolean }
 type PendingDrag = { id: string; x: number; y: number; originalX: number; originalY: number }
 
@@ -19,6 +19,7 @@ const ITEMS = [
 ]
 const ITEM_TYPES = new Set(ITEMS.map(i => i[0]))
 const icon = (type: string) => ITEMS.find(i => i[0] === type)?.[1] || '🐾'
+const label = (type: string) => ITEMS.find(i => i[0] === type)?.[2] || 'ของตกแต่ง'
 
 const FIXED_POSITIONS: Record<string, { x:number; y:number; rotation:number }> = {
   catbed: { x:18, y:70, rotation:0 },
@@ -78,7 +79,7 @@ export default function HomeDecoration() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation,color').eq('user_id', user.id).order('created_at')
+      const { data } = await supabase.from('home_decorations').select('id,item_type,x,y,rotation,color,scale').eq('user_id', user.id).order('created_at')
       if (data) {
         const seen = new Set<string>()
         const uniqueItems = data.filter(d => {
@@ -87,7 +88,8 @@ export default function HomeDecoration() {
         })
         setItems(uniqueItems.map(d => {
           const fallback = fixedPosition(d.item_type)
-          return { ...d, color:d.color || 'default', x:Number.isFinite(Number(d.x)) ? Number(d.x) : fallback.x, y:Number.isFinite(Number(d.y)) ? Number(d.y) : fallback.y, rotation:Number.isFinite(Number(d.rotation)) ? Number(d.rotation) : fallback.rotation }
+          const scale = Number(d.scale)
+          return { ...d, color:d.color || 'default', x:Number.isFinite(Number(d.x)) ? Number(d.x) : fallback.x, y:Number.isFinite(Number(d.y)) ? Number(d.y) : fallback.y, rotation:Number.isFinite(Number(d.rotation)) ? Number(d.rotation) : fallback.rotation, scale:Number.isFinite(scale) ? Math.max(.6, Math.min(1.8, scale)) : 1 }
         }))
       }
     }
@@ -120,11 +122,11 @@ export default function HomeDecoration() {
     if (!uid) { const { data:{user} } = await supabase.auth.getUser(); uid=user?.id || null; if (uid) setUserId(uid) }
     if (!uid) { alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว'); return }
     const existing = items.find(i => i.item_type === type)
-    if (existing) { setSelectedId(existing.id); alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว สามารถกดที่ชิ้นนั้นเพื่อเปลี่ยนสีหรือลบได้'); return }
+    if (existing) { setSelectedId(existing.id); alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว สามารถกดที่ชิ้นนั้นเพื่อเปลี่ยนสี ขนาด หรือลบได้'); return }
     const pos = fixedPosition(type)
-    const { data, error } = await supabase.from('home_decorations').insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default' }).select('id,item_type,x,y,rotation,color').single()
+    const { data, error } = await supabase.from('home_decorations').insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default', scale:1 }).select('id,item_type,x,y,rotation,color,scale').single()
     if (error) { console.error('Add decoration error:', error); if (error.code === '23505') alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว'); else alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message); return }
-    if (data) { setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }]); setSelectedId(data.id); setOpen(false) }
+    if (data) { setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default', scale:Number(data.scale) || 1 }]); setSelectedId(data.id); setOpen(false) }
   }
 
   const changeColor = async (id:string, color:string) => {
@@ -132,6 +134,17 @@ export default function HomeDecoration() {
     const { error } = await supabase.from('home_decorations').update({ color }).eq('id',id).eq('user_id',userId)
     if (error) { console.error('Change decoration color error:', error); return }
     setItems(v => v.map(i => i.id===id ? { ...i, color } : i))
+  }
+
+  const changeScale = async (id:string, scale:number) => {
+    if (!userId) return
+    const safeScale = Math.max(.6, Math.min(1.8, scale))
+    setItems(v => v.map(i => i.id===id ? { ...i, scale:safeScale } : i))
+    const { error } = await supabase.from('home_decorations').update({ scale:safeScale }).eq('id',id).eq('user_id',userId)
+    if (error) {
+      console.error('Change decoration scale error:', error)
+      alert('บันทึกขนาดไม่สำเร็จ กรุณาลองใหม่')
+    }
   }
 
   const deleteItem = async (id:string) => {
@@ -192,16 +205,19 @@ export default function HomeDecoration() {
     <div className="home-decoration-layer">
       {items.map(item => (
         <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
-          <button type="button" className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`,filter:colorFilter(item.color)}} onPointerDown={(e)=>startDrag(e,item)} onPointerMove={moveDrag} onPointerUp={(e)=>endDrag(e,item)} onPointerCancel={(e)=>endDrag(e,item)} onClick={(e)=>e.stopPropagation()} aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} ลากเพื่อย้ายตำแหน่ง`}>
+          <button type="button" className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`} style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg) scale(${item.scale})`,filter:colorFilter(item.color)}} onPointerDown={(e)=>startDrag(e,item)} onPointerMove={moveDrag} onPointerUp={(e)=>endDrag(e,item)} onPointerCancel={(e)=>endDrag(e,item)} onClick={(e)=>e.stopPropagation()} aria-label={`${label(item.item_type)} ลากเพื่อย้ายตำแหน่ง`}>
             {icon(item.item_type)}
           </button>
           {selectedId===item.id && (
             <div className="home-decoration-color-picker" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
               <div className="home-decoration-color-title">ลากเพื่อย้ายตำแหน่ง</div>
               {pendingDrag?.id===item.id && <div className="home-decoration-confirm-row"><button type="button" className="home-decoration-confirm" onClick={()=>void confirmDrag()}>✓ ยืนยันตำแหน่งนี้</button><button type="button" className="home-decoration-cancel" onClick={cancelDrag}>ยกเลิก</button></div>}
+              <div className="home-decoration-color-title">ขนาด {Math.round(item.scale*100)}%</div>
+              <input className="home-decoration-scale-slider" type="range" min="0.6" max="1.8" step="0.1" value={item.scale} onChange={e=>void changeScale(item.id,Number(e.target.value))} aria-label="ปรับขนาดของตกแต่ง" />
+              <div className="home-decoration-scale-labels"><span>เล็ก</span><span>ใหญ่</span></div>
               <div className="home-decoration-color-title">เลือกสี</div>
               <div className="home-decoration-colors">
-                {COLORS.map(([value,label])=><button key={value} type="button" className={`home-decoration-color-dot color-${value} ${item.color===value?'active':''}`} title={label} aria-label={label} onClick={()=>void changeColor(item.id,value)}/>) }
+                {COLORS.map(([value,labelText])=><button key={value} type="button" className={`home-decoration-color-dot color-${value} ${item.color===value?'active':''}`} title={labelText} aria-label={labelText} onClick={()=>void changeColor(item.id,value)}/>) }
               </div>
               <button type="button" className="home-decoration-delete" onClick={()=>void deleteItem(item.id)}>🗑️ ลบของตกแต่งชิ้นนี้</button>
             </div>
@@ -213,7 +229,7 @@ export default function HomeDecoration() {
 
   return <>
     <button className="home-decorate-toggle" type="button" onClick={()=>setOpen(v=>!v)}>🐱 {open ? 'ปิดของตกแต่งแมว' : 'ของตกแต่งแมว'}</button>
-    {open && <div className="home-decoration-panel"><strong>🐱 ของตกแต่งน้องแมว</strong><div className="home-decoration-items">{ITEMS.map(([type,emoji,label])=><button key={type} type="button" onClick={()=>void addItem(type)}>{emoji}<span>{label}</span></button>)}</div><small>ลากของตกแต่งได้ทั้งคอมและโทรศัพท์ • ปล่อยแล้วกดยืนยันตำแหน่ง • แตะเพื่อเปลี่ยนสีหรือลบ</small></div>}
+    {open && <div className="home-decoration-panel"><strong>🐱 ของตกแต่งน้องแมว</strong><div className="home-decoration-items">{ITEMS.map(([type,emoji,itemLabel])=><button key={type} type="button" onClick={()=>void addItem(type)}>{emoji}<span>{itemLabel}</span></button>)}</div><small>ลากของตกแต่งได้ทั้งคอมและโทรศัพท์ • ปล่อยแล้วกดยืนยันตำแหน่ง • แตะเพื่อเปลี่ยนสี ปรับขนาด หรือลบ</small></div>}
     {layer}
   </>
 }
