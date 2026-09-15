@@ -43,6 +43,16 @@ const COLORS = [
 const colorFilter = (color:string) => COLORS.find(c => c[0]===color)?.[2] || 'none'
 const fixedPosition = (type:string) => FIXED_POSITIONS[type] || { x:50, y:58, rotation:0 }
 
+function findVisibleRoom() {
+  const candidates = Array.from(document.querySelectorAll('.wallpaper-day, .wallpaper-night')) as HTMLElement[]
+  const visible = candidates.filter(el => {
+    const style = window.getComputedStyle(el)
+    const rect = el.getBoundingClientRect()
+    return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 20 && rect.height > 20
+  })
+  return visible[0] || candidates.find(el => el.offsetWidth > 20 && el.offsetHeight > 20) || null
+}
+
 export default function HomeDecoration() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Decoration[]>([])
@@ -53,11 +63,16 @@ export default function HomeDecoration() {
 
   useEffect(() => {
     setMounted(true)
-    const findRoom = () => {
-      const el = document.querySelector('.wallpaper-day, .wallpaper-night') as HTMLElement | null
+
+    const updateRoom = () => {
+      const el = findVisibleRoom()
       if (el) setRoom(el)
     }
-    findRoom()
+    updateRoom()
+    const retryTimers = [100, 300, 700, 1200].map(ms => window.setTimeout(updateRoom, ms))
+    const observer = new MutationObserver(updateRoom)
+    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style'] })
+    window.addEventListener('resize', updateRoom)
 
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -121,7 +136,12 @@ export default function HomeDecoration() {
       }
     `
     document.head.appendChild(style)
-    return () => document.getElementById('mawe-stock-spacing-fix')?.remove()
+    return () => {
+      retryTimers.forEach(window.clearTimeout)
+      observer.disconnect()
+      window.removeEventListener('resize', updateRoom)
+      document.getElementById('mawe-stock-spacing-fix')?.remove()
+    }
   }, [])
 
   const addItem = async (type: string) => {
@@ -153,8 +173,10 @@ export default function HomeDecoration() {
       return
     }
     if (data) {
-      setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }])
+      const newItem = { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }
+      setItems(v => [...v, newItem])
       setSelectedId(data.id)
+      setOpen(false)
     }
   }
 
