@@ -14,3 +14,6 @@
     position:absolute !important;left:calc(200% + 8px) !important;top:0 !important;bottom:auto !important;width:100% !important;min-height:74px !important;box-sizing:border-box !important;padding:8px 6px !important;border-radius:15px !important;background:rgba(255,250,242,.98) !important;border:1px solid rgba(255,255,255,.95) !important;box-shadow:0 7px 18px rgba(124,45,18,.12) !important;color:#7c461f !important;display:flex !important;align-items:center !important;justify-content:center !important;text-align:center !important;font-size:8px !important;line-height:1.3 !important;white-space:normal !important;z-index:25 !important;
   }
 }
+
+/* ป้องกันการสร้างการ์ดวันเปลี่ยนทรายซ้ำ: ให้แสดงเพียงใบเดียว */
+body .mawe-header-stock .mawe-litter-date-card ~ .mawe-litter-date-card{display:none !important;}
