@@ -81,122 +81,12 @@ export default function HomeDecoration() {
         .mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;}
         .mawe-header-quote{width:100%!important;max-width:none!important}
       }
-
-      /* กรอบใหม่สำหรับวันเปลี่ยนทราย อยู่เป็นการ์ดใบที่ 3 ข้าง ๆ กัน */
-      .mawe-litter-date-card{
-        min-width:0!important;
-        min-height:66px!important;
-        box-sizing:border-box!important;
-        padding:8px 9px!important;
-        border-radius:14px!important;
-        background:rgba(255,250,242,.98)!important;
-        border:1px solid rgba(255,255,255,.95)!important;
-        box-shadow:0 7px 22px rgba(124,45,18,.12)!important;
-        color:#7c461f!important;
-        display:flex!important;
-        flex-direction:column!important;
-        align-items:center!important;
-        justify-content:center!important;
-        gap:4px!important;
-        text-align:center!important;
-        overflow:hidden!important;
-      }
-      .mawe-litter-date-title{font-size:11px!important;font-weight:900!important;line-height:1.15!important;}
-      .mawe-litter-date-value{font-size:10px!important;font-weight:800!important;line-height:1.15!important;white-space:nowrap!important;}
-      .mawe-litter-date-button{border:0!important;border-radius:9px!important;background:#ffbd63!important;color:#fff!important;font-weight:900!important;font-size:10px!important;padding:5px 10px!important;cursor:pointer!important;touch-action:manipulation!important;}
-      .mawe-litter-date-button:active{transform:scale(.96);}
-      @media(max-width:767px){
-        .mawe-litter-date-card{min-height:74px!important;padding:6px 4px!important;border-radius:15px!important;gap:3px!important;}
-        .mawe-litter-date-title{font-size:8px!important;}
-        .mawe-litter-date-value{font-size:7px!important;white-space:normal!important;}
-        .mawe-litter-date-button{font-size:8px!important;padding:4px 6px!important;border-radius:8px!important;}
-      }
     `
     document.head.appendChild(style)
 
-    const formatDate = (value: string | null) => {
-      if (!value) return 'ยังไม่ระบุวัน'
-      const date = new Date(value)
-      if (Number.isNaN(date.getTime())) return 'ยังไม่ระบุวัน'
-      return date.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' })
-    }
-
-    const ensureLitterDateCard = async () => {
-      const stockWrap = document.querySelector('.mawe-header-stock') as HTMLElement | null
-      if (!stockWrap) return
-
-      let card = stockWrap.querySelector('.mawe-litter-date-card') as HTMLElement | null
-      if (!card) {
-        card = document.createElement('div')
-        card.className = 'mawe-litter-date-card'
-        card.innerHTML = `
-          <div class="mawe-litter-date-title">📅 วันเปลี่ยนทรายแมว</div>
-          <div class="mawe-litter-date-value">ยังไม่ระบุวัน</div>
-          <button type="button" class="mawe-litter-date-button">🔄 เปลี่ยนวันนี้</button>
-        `
-        stockWrap.appendChild(card)
-
-        const button = card.querySelector('.mawe-litter-date-button') as HTMLButtonElement | null
-        button?.addEventListener('click', async (e) => {
-          e.stopPropagation()
-          const { data: { user } } = await supabase.auth.getUser()
-          if (!user) return
-
-          const today = new Date().toISOString()
-          const { data: litter } = await supabase
-            .from('cat_litter')
-            .select('id')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending:false })
-            .limit(1)
-            .maybeSingle()
-
-          if (litter?.id) {
-            const { error } = await supabase
-              .from('cat_litter')
-              .update({ last_changed:today })
-              .eq('id', litter.id)
-              .eq('user_id', user.id)
-            if (error) {
-              alert('เปลี่ยนวันไม่สำเร็จ: ' + error.message)
-              return
-            }
-          } else {
-            const { error } = await supabase
-              .from('cat_litter')
-              .insert({ user_id:user.id, bags_left:0, box_count:0, last_changed:today })
-            if (error) {
-              alert('บันทึกวันเปลี่ยนทรายไม่สำเร็จ: ' + error.message)
-              return
-            }
-          }
-
-          const value = card?.querySelector('.mawe-litter-date-value') as HTMLElement | null
-          if (value) value.textContent = formatDate(today)
-        })
-      }
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data: litter } = await supabase
-        .from('cat_litter')
-        .select('last_changed')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending:false })
-        .limit(1)
-        .maybeSingle()
-      const value = card.querySelector('.mawe-litter-date-value') as HTMLElement | null
-      if (value) value.textContent = formatDate(litter?.last_changed ?? null)
-    }
-
-    const dateTimer = window.setInterval(ensureLitterDateCard, 500)
-    ensureLitterDateCard()
-
     return () => {
       if (pressTimer.current) clearTimeout(pressTimer.current)
-      window.clearInterval(dateTimer)
       document.getElementById('mawe-stock-spacing-fix')?.remove()
-      document.querySelector('.mawe-litter-date-card')?.remove()
     }
   }, [])
 
