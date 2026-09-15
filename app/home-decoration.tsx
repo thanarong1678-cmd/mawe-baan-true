@@ -1,11 +1,13 @@
 'use client'
 
 import { createPortal } from 'react-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import './home-decoration.css'
 
 type Decoration = { id: string; item_type: string; x: number; y: number; rotation: number; color: string }
+type DragState = { id: string; originalX: number; originalY: number; moved: boolean }
+type PendingDrag = { id: string; x: number; y: number; originalX: number; originalY: number }
 
 const ITEMS = [
   ['catbed','🛏️','ที่นอนแมว'],
@@ -60,6 +62,8 @@ export default function HomeDecoration() {
   const [room, setRoom] = useState<HTMLElement | null>(null)
   const [mounted, setMounted] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null)
+  const dragRef = useRef<DragState | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -91,14 +95,13 @@ export default function HomeDecoration() {
           return true
         })
         setItems(uniqueItems.map(d => {
-          const pos = fixedPosition(d.item_type)
+          const fallback = fixedPosition(d.item_type)
           return {
             ...d,
-            ...pos,
             color: d.color || 'default',
-            x:Number(pos.x),
-            y:Number(pos.y),
-            rotation:Number(pos.rotation),
+            x: Number.isFinite(Number(d.x)) ? Number(d.x) : fallback.x,
+            y: Number.isFinite(Number(d.y)) ? Number(d.y) : fallback.y,
+            rotation: Number.isFinite(Number(d.rotation)) ? Number(d.rotation) : fallback.rotation,
           }
         }))
       }
@@ -201,50 +204,117 @@ export default function HomeDecoration() {
     }
     setItems(v => v.filter(i => i.id !== id))
     setSelectedId(null)
+    setPendingDrag(null)
+  }
+
+  const savePosition = async (id:string, x:number, y:number) => {
+    if (!userId) return false
+    const { error } = await supabase
+      .from('home_decorations')
+      .update({ x, y })
+      .eq('id', id)
+      .eq('user_id', userId)
+    if (error) {
+      console.error('Save decoration position error:', error)
+      alert('บันทึกตำแหน่งไม่สำเร็จ กรุณาลองใหม่')
+      return false
+    }
+    return true
+  }
+
+  const cancelDrag = () => {
+    if (!pendingDrag) return
+    setItems(v => v.map(i => i.id===pendingDrag.id ? { ...i, x:pendingDrag.originalX, y:pendingDrag.originalY } : i))
+    setPendingDrag(null)
+  }
+
+  const confirmDrag = async () => {
+    if (!pendingDrag) return
+    const current = pendingDrag
+    const ok = await savePosition(current.id, current.x, current.y)
+    if (ok) setPendingDrag(null)
+  }
+
+  const startDrag = (e: React.PointerEvent<HTMLButtonElement>, item: Decoration) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    e.preventDefault()
+    e.stopPropagation()
+    dragRef.current = { id:item.id, originalX:item.x, originalY:item.y, moved:false }
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+
+  const moveDrag = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag || !room) return
+    const rect = room.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+    const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100))
+    const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100))
+    if (Math.abs(x - drag.originalX) > 1 || Math.abs(y - drag.originalY) > 1) drag.moved = true
+    if (drag.moved) {
+      setItems(v => v.map(i => i.id===drag.id ? { ...i, x, y } : i))
+    }
+  }
+
+  const endDrag = (e: React.PointerEvent<HTMLButtonElement>, item: Decoration) => {
+    const drag = dragRef.current
+    if (!drag || drag.id !== item.id) return
+    dragRef.current = null
+    try { e.currentTarget.releasePointerCapture?.(e.pointerId) } catch {}
+    if (!drag.moved) {
+      setSelectedId(selectedId===item.id ? null : item.id)
+      return
+    }
+    const latest = items.find(i => i.id === item.id)
+    if (!latest) return
+    setSelectedId(item.id)
+    setPendingDrag({ id:item.id, x:latest.x, y:latest.y, originalX:drag.originalX, originalY:drag.originalY })
   }
 
   const layer = mounted && room ? createPortal(
     <div className="home-decoration-layer">
-      {items.map(item => {
-        const pos = fixedPosition(item.item_type)
-        return (
-          <div key={item.id} className="home-decoration-object-wrap" style={{left:`${pos.x}%`,top:`${pos.y}%`}}>
-            <button
-              type="button"
-              className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`}
-              style={{transform:`translate(-50%,-50%) rotate(${pos.rotation}deg)`,filter:colorFilter(item.color)}}
-              onClick={(e) => { e.stopPropagation(); setSelectedId(selectedId===item.id ? null : item.id) }}
-              aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} เลือกสี`}
-            >
-              {icon(item.item_type)}
-            </button>
-            {selectedId===item.id && (
-              <div className="home-decoration-color-picker" onClick={e => e.stopPropagation()}>
-                <div className="home-decoration-color-title">เลือกสี</div>
-                <div className="home-decoration-colors">
-                  {COLORS.map(([value,label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={`home-decoration-color-dot color-${value} ${item.color===value ? 'active' : ''}`}
-                      title={label}
-                      aria-label={label}
-                      onClick={() => void changeColor(item.id,value)}
-                    />
-                  ))}
+      {items.map(item => (
+        <div key={item.id} className="home-decoration-object-wrap" style={{left:`${item.x}%`,top:`${item.y}%`}}>
+          <button
+            type="button"
+            className={`home-decoration-object ${selectedId===item.id ? 'is-selected' : ''}`}
+            style={{transform:`translate(-50%,-50%) rotate(${item.rotation}deg)`,filter:colorFilter(item.color)}}
+            onPointerDown={(e) => startDrag(e,item)}
+            onPointerMove={moveDrag}
+            onPointerUp={(e) => endDrag(e,item)}
+            onPointerCancel={(e) => endDrag(e,item)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`${ITEMS.find(i=>i[0]===item.item_type)?.[2] || 'ของตกแต่ง'} ลากเพื่อย้ายตำแหน่ง`}
+          >
+            {icon(item.item_type)}
+          </button>
+          {selectedId===item.id && (
+            <div className="home-decoration-color-picker" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+              <div className="home-decoration-color-title">ลากเพื่อย้ายตำแหน่ง</div>
+              {pendingDrag?.id===item.id && (
+                <div className="home-decoration-confirm-row">
+                  <button type="button" className="home-decoration-confirm" onClick={() => void confirmDrag()}>✓ ยืนยันตำแหน่งนี้</button>
+                  <button type="button" className="home-decoration-cancel" onClick={cancelDrag}>ยกเลิก</button>
                 </div>
-                <button
-                  type="button"
-                  className="home-decoration-delete"
-                  onClick={() => void deleteItem(item.id)}
-                >
-                  🗑️ ลบของตกแต่งชิ้นนี้
-                </button>
+              )}
+              <div className="home-decoration-color-title">เลือกสี</div>
+              <div className="home-decoration-colors">
+                {COLORS.map(([value,label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`home-decoration-color-dot color-${value} ${item.color===value ? 'active' : ''}`}
+                    title={label}
+                    aria-label={label}
+                    onClick={() => void changeColor(item.id,value)}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-        )
-      })}
+              <button type="button" className="home-decoration-delete" onClick={() => void deleteItem(item.id)}>🗑️ ลบของตกแต่งชิ้นนี้</button>
+            </div>
+          )}
+        </div>
+      ))}
     </div>, room
   ) : null
 
@@ -256,7 +326,7 @@ export default function HomeDecoration() {
         <div className="home-decoration-items">
           {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => void addItem(type)}>{emoji}<span>{label}</span></button>)}
         </div>
-        <small>ของตกแต่งแต่ละชนิดมีได้เพียง 1 ชิ้น • แตะของตกแต่งในบ้านเพื่อเปลี่ยนสีหรือลบ</small>
+        <small>ลากของตกแต่งได้ทั้งคอมและโทรศัพท์ • ปล่อยแล้วกดยืนยันตำแหน่ง • แตะเพื่อเปลี่ยนสีหรือลบ</small>
       </div>
     )}
     {layer}
