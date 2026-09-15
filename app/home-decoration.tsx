@@ -82,10 +82,50 @@ export default function HomeDecoration() {
         .mawe-header-stock{right:10px!important;left:10px!important;width:calc(100% - 20px)!important}
         .mawe-header-quote{width:100%!important;max-width:none!important}
       }
+
+      /* วันเปลี่ยนทราย: แสดงในช่องทรายแมว โดยไม่เพิ่มความสูงของ Header */
+      .mawe-stock-last-changed{position:absolute;left:52px;bottom:6px;font-size:8px;line-height:1.1;color:#b87843;font-weight:800;white-space:nowrap;pointer-events:none;}
+      .mawe-stock-card{position:relative!important;}
+      @media(max-width:767px){
+        .mawe-stock-last-changed{left:42px;bottom:5px;font-size:7px;}
+      }
     `
     document.head.appendChild(style)
+
+    const formatLitterDate = (value: string | null) => {
+      if (!value) return '🗓️ ยังไม่ระบุวันเปลี่ยน'
+      const date = new Date(value)
+      if (Number.isNaN(date.getTime())) return '🗓️ ยังไม่ระบุวันเปลี่ยน'
+      return `🗓️ เปลี่ยนล่าสุด ${date.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' })}`
+    }
+
+    const updateLitterDate = async () => {
+      const card = document.querySelector('.mawe-header-stock .mawe-stock-card:first-child') as HTMLElement | null
+      if (!card) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: litter } = await supabase
+        .from('cat_litter')
+        .select('last_changed')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending:false })
+        .limit(1)
+        .maybeSingle()
+      let dateEl = card.querySelector('.mawe-stock-last-changed') as HTMLElement | null
+      if (!dateEl) {
+        dateEl = document.createElement('div')
+        dateEl.className = 'mawe-stock-last-changed'
+        card.appendChild(dateEl)
+      }
+      dateEl.textContent = formatLitterDate(litter?.last_changed ?? null)
+    }
+
+    updateLitterDate()
+    const dateTimer = window.setInterval(updateLitterDate, 1000)
+
     return () => {
       if (pressTimer.current) clearTimeout(pressTimer.current)
+      window.clearInterval(dateTimer)
       document.getElementById('mawe-stock-spacing-fix')?.remove()
     }
   }, [])
