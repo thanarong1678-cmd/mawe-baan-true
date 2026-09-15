@@ -69,14 +69,23 @@ export default function HomeDecoration() {
         .eq('user_id', user.id)
         .order('created_at')
       if (data) {
-        setItems(data.filter(d => ITEM_TYPES.has(d.item_type)).map(d => ({
-          ...d,
-          ...fixedPosition(d.item_type),
-          color: d.color || 'default',
-          x:Number(fixedPosition(d.item_type).x),
-          y:Number(fixedPosition(d.item_type).y),
-          rotation:Number(fixedPosition(d.item_type).rotation),
-        })))
+        const seen = new Set<string>()
+        const uniqueItems = data.filter(d => {
+          if (!ITEM_TYPES.has(d.item_type) || seen.has(d.item_type)) return false
+          seen.add(d.item_type)
+          return true
+        })
+        setItems(uniqueItems.map(d => {
+          const pos = fixedPosition(d.item_type)
+          return {
+            ...d,
+            ...pos,
+            color: d.color || 'default',
+            x:Number(pos.x),
+            y:Number(pos.y),
+            rotation:Number(pos.rotation),
+          }
+        }))
       }
     }
     void load()
@@ -123,13 +132,26 @@ export default function HomeDecoration() {
       if (uid) setUserId(uid)
     }
     if (!uid) { alert('กรุณาเข้าสู่ระบบก่อนเพิ่มของตกแต่งแมว'); return }
+
+    const existing = items.find(i => i.item_type === type)
+    if (existing) {
+      setSelectedId(existing.id)
+      alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว สามารถกดที่ชิ้นนั้นเพื่อเปลี่ยนสีหรือลบได้')
+      return
+    }
+
     const pos = fixedPosition(type)
     const { data, error } = await supabase
       .from('home_decorations')
       .insert({ user_id:uid, item_type:type, x:pos.x, y:pos.y, rotation:pos.rotation, color:'default' })
       .select('id,item_type,x,y,rotation,color')
       .single()
-    if (error) { console.error('Add decoration error:', error); alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message); return }
+    if (error) {
+      console.error('Add decoration error:', error)
+      if (error.code === '23505') alert('ของตกแต่งชิ้นนี้มีอยู่แล้ว')
+      else alert('เพิ่มของตกแต่งไม่สำเร็จ: ' + error.message)
+      return
+    }
     if (data) {
       setItems(v => [...v, { ...data, x:pos.x, y:pos.y, rotation:pos.rotation, color:data.color || 'default' }])
       setSelectedId(data.id)
@@ -141,6 +163,22 @@ export default function HomeDecoration() {
     const { error } = await supabase.from('home_decorations').update({ color }).eq('id',id).eq('user_id',userId)
     if (error) { console.error('Change decoration color error:', error); return }
     setItems(v => v.map(i => i.id===id ? { ...i, color } : i))
+  }
+
+  const deleteItem = async (id:string) => {
+    if (!userId) return
+    const { error } = await supabase
+      .from('home_decorations')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+    if (error) {
+      console.error('Delete decoration error:', error)
+      alert('ลบของตกแต่งไม่สำเร็จ: ' + error.message)
+      return
+    }
+    setItems(v => v.filter(i => i.id !== id))
+    setSelectedId(null)
   }
 
   const layer = mounted && room ? createPortal(
@@ -173,6 +211,13 @@ export default function HomeDecoration() {
                     />
                   ))}
                 </div>
+                <button
+                  type="button"
+                  className="home-decoration-delete"
+                  onClick={() => void deleteItem(item.id)}
+                >
+                  🗑️ ลบของตกแต่งชิ้นนี้
+                </button>
               </div>
             )}
           </div>
@@ -189,7 +234,7 @@ export default function HomeDecoration() {
         <div className="home-decoration-items">
           {ITEMS.map(([type, emoji, label]) => <button key={type} type="button" onClick={() => void addItem(type)}>{emoji}<span>{label}</span></button>)}
         </div>
-        <small>แตะของตกแต่งในบ้านเพื่อเลือกสี • ของตกแต่งจะอยู่ตำแหน่งประจำและไม่สามารถลากย้ายได้</small>
+        <small>ของตกแต่งแต่ละชนิดมีได้เพียง 1 ชิ้น • แตะของตกแต่งในบ้านเพื่อเปลี่ยนสีหรือลบ</small>
       </div>
     )}
     {layer}
